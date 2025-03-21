@@ -1,7 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { FiCopy, FiArrowLeft } from 'react-icons/fi';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  variant?: 'home' | 'designer';
+  projectName?: string;
+  isPublic?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ 
+  variant = 'home',
+  projectName = "App Designer",
+  isPublic = false 
+}) => {
   return (
     <header className="bg-gradient-to-r from-[#080808] to-[#0a0a0a] border-b border-[#222] py-1.5 px-4 relative z-20">
       {/* Subtle glow line under header */}
@@ -9,52 +20,121 @@ const Header: React.FC = () => {
       
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <motion.a 
-            href="/" 
-            className="flex items-center group"
-            whileHover={{ scale: 1.03 }}
-          >
-            <div className="relative w-5 h-5 mr-1.5">
-              {/* Logo glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-sm blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative w-4 h-4 bg-gradient-to-b from-blue-400 to-blue-600 flex flex-col">
-                <div className="h-1/5 bg-blue-300"></div>
-                <div className="h-1/5 bg-blue-400"></div>
-                <div className="h-1/5 bg-blue-500"></div>
-                <div className="h-1/5 bg-blue-600"></div>
-                <div className="h-1/5 bg-blue-700"></div>
+          {/* Logo dla strony głównej */}
+          {variant === 'home' && (
+            <motion.a 
+              href="/" 
+              className="flex items-center group"
+              whileHover={{ scale: 1.03 }}
+            >
+              <div className="relative w-5 h-5 mr-1.5">
+                {/* Logo glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-sm blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative w-4 h-4 bg-gradient-to-b from-blue-400 to-blue-600 flex flex-col">
+                  <div className="h-1/5 bg-blue-300"></div>
+                  <div className="h-1/5 bg-blue-400"></div>
+                  <div className="h-1/5 bg-blue-500"></div>
+                  <div className="h-1/5 bg-blue-600"></div>
+                  <div className="h-1/5 bg-blue-700"></div>
+                </div>
+              </div>
+              <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">HyperBuild</span>
+            </motion.a>
+          )}
+          
+          {/* Przycisk powrotu dla strony projektu */}
+          {variant === 'designer' && (
+            <motion.a 
+              href="/" 
+              className="flex items-center group text-neutral-400 hover:text-white transition-colors"
+              whileHover={{ x: -2 }}
+            >
+              <FiArrowLeft className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Back to home</span>
+            </motion.a>
+          )}
+          
+          {/* Navigation for Home page variant */}
+          {variant === 'home' && (
+            <nav className="hidden md:flex items-center ml-6 space-x-5">
+              <motion.a 
+                href="#" 
+                className="text-xs text-gray-400 hover:text-white transition-colors relative group"
+                whileHover={{ y: -1 }}
+              >
+                <span>Features</span>
+                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
+              </motion.a>
+              <motion.a 
+                href="#" 
+                className="text-xs text-gray-400 hover:text-white transition-colors relative group"
+                whileHover={{ y: -1 }}
+              >
+                <span>Pricing</span>
+                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
+              </motion.a>
+              <motion.a 
+                href="#" 
+                className="text-xs text-gray-400 hover:text-white transition-colors relative group"
+                whileHover={{ y: -1 }}
+              >
+                <span>Docs</span>
+                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
+              </motion.a>
+            </nav>
+          )}
+          
+          {/* Project info for Designer page variant */}
+          {variant === 'designer' && (
+            <div className="hidden md:flex items-center border-l border-neutral-800 ml-4 pl-4">
+              <div>
+                <h1 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">{projectName}</h1>
+                <div className="flex items-center mt-0.5">
+                  <p className="text-[10px] text-neutral-400 mr-2">
+                    {isPublic ? 'Public project' : 'Private project'} • Created just now
+                  </p>
+                  {/* Wskaźnik statusu projektu - obok nazwy */}
+                  <div className="flex items-center px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mr-1 animate-pulse"></span>
+                    <span className="text-[10px] text-green-300">Active</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">HyperBuild</span>
-          </motion.a>
-          
-          <nav className="hidden md:flex items-center ml-6 space-x-5">
-            <motion.a 
-              href="#" 
-              className="text-xs text-gray-400 hover:text-white transition-colors relative"
-              whileHover={{ y: -1 }}
-            >
-              <span>Features</span>
-              <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
-            </motion.a>
-            <motion.a 
-              href="#" 
-              className="text-xs text-gray-400 hover:text-white transition-colors relative"
-              whileHover={{ y: -1 }}
-            >
-              <span>Pricing</span>
-              <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
-            </motion.a>
-            <motion.a 
-              href="#" 
-              className="text-xs text-gray-400 hover:text-white transition-colors relative"
-              whileHover={{ y: -1 }}
-            >
-              <span>Docs</span>
-              <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
-            </motion.a>
-          </nav>
+          )}
         </div>
+        
+        {/* Link do udostępniania i przycisk Share - tylko dla wersji designer */}
+        {variant === 'designer' && (
+          <div className="hidden md:flex items-center space-x-3 mr-3">
+            <div className="hidden lg:flex items-center bg-[#0c0c0c] rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors shadow-sm flex-1">
+              <input type="text" 
+                value="https://hyperbuild.ai/project/12345" 
+                className="bg-transparent text-xs text-neutral-300 px-3 py-1.5 focus:outline-none w-96"
+                readOnly
+              />
+              <button className="bg-[#181818] text-neutral-200 hover:text-blue-400 px-3 py-1.5 rounded-r-lg border-l border-neutral-800 transition-colors flex items-center">
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <FiCopy className="w-3.5 h-3.5" />
+                </motion.div>
+              </button>
+            </div>
+            
+            {/* Przycisk udostępniania - większy i bardziej widoczny */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center px-3.5 py-1.5 bg-[#181818] hover:bg-[#222] rounded-lg text-sm text-white transition-colors font-medium border border-neutral-800 shadow-sm"
+            >
+              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15l4.5-4.5 4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 10.5V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M20.25 13.5V6.75a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v6.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Share</span>
+            </motion.button>
+          </div>
+        )}
         
         <div className="flex items-center space-x-3">
           <motion.a 

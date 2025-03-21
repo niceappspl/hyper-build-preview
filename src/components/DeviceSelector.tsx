@@ -30,7 +30,7 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({ selectedDevice, onChang
   };
 
   return (
-    <div className="relative z-50" ref={dropdownRef}>
+    <div className="relative z-[9999]" ref={dropdownRef}>
       <motion.button 
         whileHover={{ y: -1 }}
         whileTap={{ y: 0 }}

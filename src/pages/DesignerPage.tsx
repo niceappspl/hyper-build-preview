@@ -287,66 +287,6 @@ AppRegistry.registerComponent(appName, () => App);`;
     );
   };
 
-  // Funkcja do renderowania podglądu urządzenia
-  const renderDevicePreview = () => {
-    // Definiujemy rzeczywiste proporcje iPhone'a
-    const iphoneWidth = 393;
-    const iphoneHeight = 852;
-    const androidWidth = 393;
-    const androidHeight = 852;
-    
-    // Ustalamy skalę dla interfejsu (zwiększamy szerokość dla lepszego wyświetlania)
-    const scale = 0.7; // Skala do dopasowania do interfejsu
-    const deviceWidth = selectedDevice === 'iphone' ? iphoneWidth * scale : androidWidth * scale;
-    const deviceHeight = selectedDevice === 'iphone' ? iphoneHeight * scale : androidHeight * scale;
-    
-    // Obliczamy marginesy dla zawartości z uwzględnieniem Dynamic Island i Home Indicator
-    const contentMarginX = deviceWidth * 0.05; // 5% marginesu po bokach
-    const contentMarginTop = deviceWidth * 0.06; // 6% marginesu z góry (dla Dynamic Island)
-    const contentMarginBottom = deviceWidth * 0.07; // 7% marginesu z dołu (dla Home Indicator)
-    const contentWidth = deviceWidth - (contentMarginX * 2);
-    const contentHeight = deviceHeight - contentMarginTop - contentMarginBottom;
-    
-    return (
-      <div className="flex-1 flex justify-center items-center p-4 overflow-auto bg-[#080808]">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="transform transition-transform duration-300 relative"
-        >
-          {/* Glow effect pod urządzeniem */}
-          <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
-          
-          {/* Phone Frame */}
-          <div className="relative" style={{ width: `${deviceWidth}px`, height: `${deviceHeight}px` }}>
-            {/* iPhone Frame */}
-            <div className="absolute inset-0 pointer-events-none z-10">
-              <img 
-                src="/frames/iphone.svg" 
-                alt="iPhone frame" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-            
-            {/* Phone Content */}
-            <div className="absolute z-0 rounded-[30px] overflow-hidden" style={{ 
-              top: `${contentMarginTop}px`, 
-              left: `${contentMarginX}px`, 
-              width: `${contentWidth}px`, 
-              height: `${contentHeight}px`
-            }}>
-              {mockType === 'spotify' && (
-                <div className="w-full h-full relative">
-                  <SpotifyMock containerStyle={{ position: 'relative', height: '100%' }} />
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#050505] text-white relative">
@@ -363,58 +303,10 @@ AppRegistry.registerComponent(appName, () => App);`;
         <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-purple-400/20 to-cyan-500/20 rounded-full blur-[100px] opacity-80" />
       </div>
       
-      <Header />
+      <Header variant="designer" projectName="App Designer" isPublic={isPublic} />
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-10 px-6 py-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-3">
-            <div>
-              <h1 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">App Designer</h1>
-              <div className="flex items-center mt-0.5">
-                <p className="text-[10px] text-neutral-400 mr-2">
-                  {isPublic ? 'Public project' : 'Private project'} • Created just now
-                </p>
-                {/* Wskaźnik statusu projektu - obok nazwy */}
-                <div className="flex items-center px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mr-1 animate-pulse"></span>
-                  <span className="text-[10px] text-green-300">Active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Uproszczona sekcja z dodatkowymi informacjami o projekcie i opcjami współdzielenia */}
-          <div className="flex items-center space-x-3">
-            {/* Link do udostępniania - bardziej widoczny */}
-            <div className="hidden md:flex items-center bg-[#0c0c0c] rounded-lg border border-neutral-800 hover:border-neutral-700 transition-colors shadow-sm">
-              <input type="text" 
-                value="https://hyperbuild.ai/project/12345" 
-                className="bg-transparent text-xs text-neutral-300 px-3 py-1.5 focus:outline-none w-60"
-                readOnly
-              />
-              <button className="bg-[#181818] text-neutral-200 hover:text-blue-400 px-3 py-1.5 rounded-r-lg border-l border-neutral-800 transition-colors flex items-center">
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <FiCopy className="w-3.5 h-3.5" />
-                </motion.div>
-              </button>
-            </div>
-            
-            {/* Przycisk udostępniania - większy i bardziej widoczny */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center px-3.5 py-1.5 bg-[#181818] hover:bg-[#222] rounded-lg text-sm text-white transition-colors font-medium border border-neutral-800 shadow-sm"
-            >
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 15l4.5-4.5 4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 10.5V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M20.25 13.5V6.75a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v6.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>Share</span>
-            </motion.button>
-          </div>
-        </div>
-        
+        {/* Główny kontener z podglądem urządzenia i interfejsem czatu */}
         <div className="flex-1 flex overflow-hidden gap-6">
           {/* Lewa strona - ramka urządzenia (40%) */}
           <div className="w-[42%] flex flex-col bg-[#0a0a0a]/80 backdrop-blur-md overflow-hidden rounded-2xl border border-neutral-800 shadow-xl">
@@ -456,7 +348,20 @@ AppRegistry.registerComponent(appName, () => App);`;
             </div>
             
             {/* Renderowanie podglądu urządzenia z nowym tłem */}
-            <div className="flex-1 flex justify-center items-center p-8 overflow-auto bg-gradient-to-b from-[#0c0c0c] to-black relative">
+            <div className="flex-1 flex justify-center items-center p-8 overflow-auto relative bg-[#080808]">
+              {/* Efekt gradientu i świecenia dla tła panelu */}
+              <div className="absolute inset-0 overflow-hidden">
+                {/* Gradient nakładka */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/70 to-transparent"></div>
+                
+                {/* Gradient orbs - jaśniejsze świecące kule */}
+                <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-gradient-to-r from-blue-500/15 to-blue-700/15 rounded-full blur-[100px] opacity-70"></div>
+                <div className="absolute bottom-1/3 right-1/4 w-[350px] h-[350px] bg-gradient-to-r from-purple-400/15 to-cyan-500/15 rounded-full blur-[100px] opacity-70"></div>
+                
+                {/* Subtelna siatka */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+              </div>
+              
               {/* Renderowanie w zależności od trybu podglądu */}
               {viewMode === 'app' && (
                 <motion.div 
@@ -466,6 +371,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                   className="transform transition-transform duration-300 relative"
                 >
                   {/* Glow effect pod urządzeniem - usunięty */}
+                  <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                   
                   {/* Phone Frame */}
                   <div className="relative" style={{ width: `${selectedDevice === 'iphone' ? 393 * 0.7 : 393 * 0.7}px`, 
@@ -515,6 +421,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                   <div className="w-1/2 h-full flex justify-center items-center">
                     <motion.div className="relative scale-75">
                       {/* Glow effect pod urządzeniem - usunięty */}
+                      <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                       <div className="relative" style={{ width: `${selectedDevice === 'iphone' ? 393 * 0.7 : 393 * 0.7}px`, 
                                                       height: `${selectedDevice === 'iphone' ? 852 * 0.7 : 852 * 0.7}px` }}>
                         <div className="absolute inset-0 pointer-events-none z-10">
@@ -637,7 +544,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                   onSendMessage={handleChatMessage}
                 />
               ) : activeTab === 'code' ? (
-                <div className="h-full flex">
+                <div className="flex-1 h-full flex">
                   {/* File Explorer */}
                   <div className="w-[260px] h-full bg-[#0a0a0a] border-r border-neutral-800 flex flex-col">
                     <div className="p-3 border-b border-neutral-800 flex justify-between items-center bg-gradient-to-r from-[#131313] to-[#0c0c0c]">
@@ -655,12 +562,21 @@ AppRegistry.registerComponent(appName, () => App);`;
                       </div>
                     </div>
                     <div className="flex-1 overflow-y-auto py-1 text-neutral-300 bg-gradient-to-b from-[#0c0c0c] to-black">
+                      {/* Niebieskie podświetlenie dla file explorera - podobne do edytora kodu */}
+                      <div className="absolute inset-y-0 left-0 w-[260px] bg-gradient-to-br from-blue-500/5 via-blue-600/5 to-transparent opacity-80 pointer-events-none"></div>
+                      
                       {renderFileTree(fileStructure)}
                     </div>
                   </div>
                   
                   {/* Code Editor */}
-                  <div className="flex-1 flex flex-col h-full">
+                  <div className="flex-1 flex flex-col h-full relative">
+                    {/* Niebieskie podświetlenie dla edytora kodu - podobne do edytora kodu w innych zakładkach */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-blue-600/5 to-transparent opacity-80 pointer-events-none"></div>
+                    
+                    {/* Subtle glow effect dla całego panelu - podobny do efektu kodu */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-r-xl opacity-70 pointer-events-none"></div>
+                    
                     <div className="px-4 py-3 border-b border-neutral-800 bg-gradient-to-r from-[#131313] to-[#0c0c0c] flex items-center justify-between">
                       <div className="flex items-center">
                         {selectedFile === 'App.js' && <SiReact className="text-blue-400 w-5 h-5 mr-2.5" />}

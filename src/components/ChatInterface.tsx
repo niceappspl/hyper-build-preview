@@ -138,12 +138,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               
               <div className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-md relative ${
                 message.sender === 'user' 
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-tr-none' 
-                  : 'bg-[#111] text-white rounded-tl-none border border-neutral-800'
+                  ? 'bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white rounded-tr-none backdrop-blur-sm' 
+                  : 'bg-[#121212] text-white rounded-tl-none border border-neutral-800/80 backdrop-blur-sm'
               }`}>
                 {/* Subtle glow for AI messages */}
                 {message.sender === 'ai' && (
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-2xl rounded-tl-none blur-sm opacity-70 -z-10"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl rounded-tl-none blur-sm opacity-80 -z-10"></div>
+                )}
+                {/* Subtle glow for User messages */}
+                {message.sender === 'user' && (
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-2xl rounded-tr-none blur-sm opacity-80 -z-10"></div>
                 )}
                 
                 {message.sender === 'ai' && (
@@ -197,7 +201,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       <div className="p-4 bg-gradient-to-b from-[#080808] to-[#0a0a0a] border-t border-[#222] relative z-10">
         <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center bg-[#111] rounded-lg border border-[#333] overflow-hidden focus-within:border-blue-500 transition-all shadow-md">
             <textarea
               ref={inputRef}
@@ -215,12 +219,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             />
             <motion.button 
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="h-full px-4 text-white transition-all flex items-center justify-center bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50"
+              whileTap={{ scale: 0.9 }}
+              className="h-full px-4 text-white transition-all flex items-center justify-center relative"
               onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || isAiTyping}
             >
-              <FiSend className="w-4 h-4" />
+              {/* Tło przycisku */}
+              
+              {/* Ikona */}
+              <div className="relative z-10">
+                <FiSend className="w-5 h-5 text-white" />
+              </div>
             </motion.button>
           </div>
         </div>

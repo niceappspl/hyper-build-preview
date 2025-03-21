@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#000000] relative overflow-hidden">
-      <Header />
+      <Header variant="home" />
       
       {/* Background Elements */}
       <div className="absolute inset-0">
