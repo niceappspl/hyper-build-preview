@@ -1,0 +1,188 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primary Colors */
+  --primary: #367BF4;
+  --primary-light: #4B8DF5;
+  --primary-dark: #2868E0;
+  --primary-alpha-10: rgba(54, 123, 244, 0.1);
+  --primary-alpha-20: rgba(54, 123, 244, 0.2);
+  --primary-alpha-30: rgba(54, 123, 244, 0.3);
+  
+  /* Background Colors */
+  --bg-dark: #000000;
+  --bg-dark-light: #1a1a1a;
+  --bg-dark-lighter: #333333;
+  
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+  
+  /* Base colors */
+  --background: #000000;    /* Zmiana na czysty czarny */
+  --foreground: #FFFFFF;    /* Czysty biały dla głównego tekstu */
+  
+  /* Secondary colors */
+  --secondary: #7E8BB1;     /* Oryginalny niebieski akcent */
+  --secondary-dark: #5A6687;/* Przygaszony niebieski */
+  --secondary-light: #A5B0CD;/* Jasny niebieski */
+  
+  /* Neutral colors */
+  --muted: #64748B;         /* Przygaszony tekst */
+  --border: #1E293B;        /* Bordery */
+  --surface: #111827;       /* Tło komponentów */
+  
+  /* Status colors */
+  --success: #10B981;       /* Zielony */
+  --error: #EF4444;         /* Czerwony */
+  --warning: #F59E0B;       /* Pomarańczowy */
+  
+  font-size: 14px;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  background: #000000;
+  width: 100%;
+  overflow-x: hidden;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100%;
+  overflow-x: hidden;
+  position: relative;
+  background: #000000;
+}
+
+body {
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Gradient Text Animation */
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient {
+  background-size: 300% 300%;
+  animation: gradient 8s ease infinite;
+}
+
+/* Add after existing animations */
+
+.glow-effect {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(0,112,243,0.05) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(100px);
+  animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%, 0) scale(1.1); opacity: 0.7; }
+}
+
+.animate-grid {
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(64px); }
+}
+
+/* Dodaj po istniejących regułach */
+code, pre, .syntax-highlighter {
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-x {
+  animation: scroll 30s linear infinite;
+}
+
+.animate-scroll-x-slow {
+  animation: scroll 45s linear infinite;
+}
+
+/* Hover effects */
+.animate-scroll-x:hover,
+.animate-scroll-x-slow:hover {
+  animation-play-state: paused;
+}
+
+/* API Visualization Animations */
+@keyframes data-flow {
+  0% { transform: translateY(100%); opacity: 0; }
+  50% { transform: translateY(0%); opacity: 1; }
+  100% { transform: translateY(-100%); opacity: 0; }
+}
+
+.animate-data-flow {
+  animation: data-flow 2s linear infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Float animation with more subtle movement */
+@keyframes float {
+  0% { transform: translateY(0px) translateX(0px); }
+  25% { transform: translateY(-5px) translateX(3px); }
+  50% { transform: translateY(0px) translateX(5px); }
+  75% { transform: translateY(5px) translateX(3px); }
+  100% { transform: translateY(0px) translateX(0px); }
+}
+
+.animate-float-delayed {
+  animation: float 8s ease-in-out infinite;
+  animation-delay: -4s;
+}
