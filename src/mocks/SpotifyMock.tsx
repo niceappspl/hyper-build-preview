@@ -49,7 +49,7 @@ const MusicApp: React.FC<MusicAppProps> = ({ containerStyle }) => {
         {/* Title Block */}
         <div style={{ textAlign: 'center', marginBottom: '25px' }}>
           <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#e67e22', margin: '0 0 4px 0' }}>
-            Music Simplified
+            Music Simplified2
           </h1>
           <p style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)', margin: 0, padding: '0 10px' }}>
             All your favorite songs in one place

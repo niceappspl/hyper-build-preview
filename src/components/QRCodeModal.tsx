@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { FiX, FiDownload, FiSmartphone, FiInfo } from 'react-icons/fi';
-import SpotifyMock from '../mocks/SpotifyMock';
+import PreviewScreen from './PreviewScreen';
 
 interface QRCodeModalProps {
   isVisible: boolean;
@@ -28,22 +28,6 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
   
   // Use the provided QR code URL or the preview URL for the QR code
   const qrCodeValue = qrCodeUrl || previewUrl;
-  
-  // Definiujemy rzeczywiste proporcje iPhone'a
-  const iphoneWidth = 393;
-  const iphoneHeight = 852;
-  
-  // Ustalamy skalę dla interfejsu
-  const scale = 0.5; 
-  const deviceWidth = iphoneWidth * scale;
-  const deviceHeight = iphoneHeight * scale;
-  
-  // Obliczamy marginesy dla zawartości
-  const contentMarginX = deviceWidth * 0.05;
-  const contentMarginTop = deviceWidth * 0.06;
-  const contentMarginBottom = deviceWidth * 0.07;
-  const contentWidth = deviceWidth - (contentMarginX * 2);
-  const contentHeight = deviceHeight - contentMarginTop - contentMarginBottom;
 
   return (
     <AnimatePresence>
@@ -84,30 +68,13 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                 {/* Subtle glow behind device */}
                 <div className="absolute -inset-4 bg-gradient-to-b from-blue-500/10 to-purple-500/10 rounded-[40px] blur-xl opacity-70"></div>
                 
-                {/* Device Frame */}
-                <div className="relative" style={{ width: `${deviceWidth}px`, height: `${deviceHeight}px` }}>
-                  {/* Phone Frame */}
-                  <div className="absolute inset-0 pointer-events-none z-10">
-                    <img 
-                      src="/frames/iphone.svg" 
-                      alt="Device frame" 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  
-                  {/* Phone Content */}
-                  <div className="absolute z-0 rounded-[30px] overflow-hidden" style={{ 
-                    top: `${contentMarginTop}px`, 
-                    left: `${contentMarginX}px`, 
-                    width: `${contentWidth}px`, 
-                    height: `${contentHeight}px`
-                  }}>
-                    {mockType === 'spotify' && (
-                      <div className="w-full h-full relative">
-                        <SpotifyMock containerStyle={{ position: 'relative', height: '100%', overflow: 'hidden' }} />
-                      </div>
-                    )}
-                  </div>
+                {/* Używamy komponentu PreviewScreen zamiast bezpośredniego renderowania */}
+                <div className="scale-75">
+                  <PreviewScreen 
+                    prompt={prompt} 
+                    mockType="default" 
+                    selectedDevice={deviceType} 
+                  />
                 </div>
               </div>
               

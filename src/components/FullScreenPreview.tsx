@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiDownload, FiExternalLink, FiCopy } from 'react-icons/fi';
-import SpotifyMock from '../mocks/SpotifyMock';
 import Tooltip from './Tooltip';
+import PreviewScreen from './PreviewScreen';
 
 interface FullScreenPreviewProps {
   isVisible: boolean;
@@ -19,22 +19,6 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   mockType,
   prompt 
 }) => {
-  // Definiujemy rzeczywiste proporcje iPhone'a
-  const iphoneWidth = 393;
-  const iphoneHeight = 852;
-  
-  // Ustalamy skalę dla interfejsu - większa skala dla lepszej widoczności
-  const scale = 0.8; 
-  const deviceWidth = iphoneWidth * scale;
-  const deviceHeight = iphoneHeight * scale;
-  
-  // Obliczamy marginesy dla zawartości
-  const contentMarginX = deviceWidth * 0.05;
-  const contentMarginTop = deviceWidth * 0.06;
-  const contentMarginBottom = deviceWidth * 0.07;
-  const contentWidth = deviceWidth - (contentMarginX * 2);
-  const contentHeight = deviceHeight - contentMarginTop - contentMarginBottom;
-
   return (
     <AnimatePresence>
       {isVisible && (
@@ -45,6 +29,20 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
+          {/* Close button - umieszczamy na najwyższym poziomie, poza kontenerem */}
+          <motion.button 
+            className="fixed top-6 right-6 p-3 rounded-full bg-black/70 hover:bg-black/90 border border-neutral-700 transition-colors z-[10001] text-white"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={onClose}
+            aria-label="Close preview"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <FiX className="w-6 h-6" />
+          </motion.button>
+          
           <motion.div 
             className="relative max-w-7xl w-[95%] h-[90vh] flex flex-col items-center justify-center rounded-2xl overflow-hidden"
             initial={{ scale: 0.9 }}
@@ -53,16 +51,6 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
             transition={{ type: 'spring', damping: 25 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
-            <Tooltip content="Close Preview" position="left">
-              <button 
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 border border-neutral-700 transition-colors z-50"
-                onClick={onClose}
-              >
-                <FiX className="w-5 h-5 text-white" />
-              </button>
-            </Tooltip>
-            
             {/* Tools panel */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-40">
               <Tooltip content="Download Screenshot" position="right">
@@ -119,31 +107,12 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               {/* Glow effect behind the device */}
               <div className="absolute -inset-12 bg-gradient-to-b from-blue-500/10 to-purple-500/10 rounded-[100px] blur-2xl opacity-50"></div>
               
-              {/* Device Frame */}
-              <div className="relative" style={{ width: `${deviceWidth}px`, height: `${deviceHeight}px` }}>
-                {/* Phone Frame */}
-                <div className="absolute inset-0 pointer-events-none z-10">
-                  <img 
-                    src="/frames/iphone.svg" 
-                    alt="Device frame" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                
-                {/* Phone Content */}
-                <div className="absolute z-0 rounded-[30px] overflow-hidden" style={{ 
-                  top: `${contentMarginTop}px`, 
-                  left: `${contentMarginX}px`, 
-                  width: `${contentWidth}px`, 
-                  height: `${contentHeight}px`
-                }}>
-                  {mockType === 'spotify' && (
-                    <div className="w-full h-full relative">
-                      <SpotifyMock containerStyle={{ position: 'relative', height: '100%', overflow: 'hidden' }} />
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Używamy komponentu PreviewScreen zamiast bezpośredniego renderowania */}
+              <PreviewScreen 
+                prompt={prompt} 
+                mockType="default" 
+                selectedDevice={deviceType} 
+              />
             </motion.div>
             
             {/* Caption */}

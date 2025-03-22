@@ -152,54 +152,91 @@ const projectService = {
   },
 
   /**
-   * Get all files for a project (structure only)
+   * Get file structure for a project
    */
-  async getProjectFiles(projectId: string): Promise<ProjectFile[]> {
-    const response = await api.get<ProjectFile[]>(`/projects/${projectId}/files`);
-    return response.data;
+  async getProjectFiles(projectId: string): Promise<any> {
+    try {
+      const response = await api.get(`/projects/${projectId}/files`);
+      return response.data.files || [];
+    } catch (error) {
+      console.error('Error fetching project files:', error);
+      throw error;
+    }
   },
 
   /**
    * Get all files with content for a project
    */
-  async getAllFilesContent(projectId: string): Promise<ProjectFile[]> {
-    const response = await api.get<ProjectFile[]>(`/projects/${projectId}/files/all`);
-    return response.data;
+  async getAllFilesContent(projectId: string): Promise<any> {
+    try {
+      const response = await api.get(`/projects/${projectId}/files/all`);
+      return response.data.files || {};
+    } catch (error) {
+      console.error('Error fetching all files content:', error);
+      throw error;
+    }
   },
 
   /**
    * Get a single file's content
    */
-  async getFileContent(projectId: string, path: string): Promise<string> {
-    const response = await api.get<{ content: string }>(`/projects/${projectId}/file`, {
-      params: { path }
-    });
-    return response.data.content;
+  async getFileContent(projectId: string, filePath: string): Promise<string> {
+    try {
+      const response = await api.get(`/projects/${projectId}/file`, {
+        params: { filePath }
+      });
+      return response.data.content || '';
+    } catch (error) {
+      console.error('Error fetching file content:', error);
+      throw error;
+    }
   },
 
   /**
-   * Add a new file or folder to a project
+   * Add a new file to a project
    */
-  async addFile(projectId: string, fileData: FileOperationData): Promise<ProjectFile> {
-    const response = await api.post<ProjectFile>(`/projects/${projectId}/files`, fileData);
-    return response.data;
+  async addFile(projectId: string, filePath: string, content: string = ''): Promise<any> {
+    try {
+      const response = await api.post(`/projects/${projectId}/files`, {
+        filePath,
+        content
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error adding file:', error);
+      throw error;
+    }
   },
 
   /**
    * Update an existing file
    */
-  async updateFile(projectId: string, fileData: FileOperationData): Promise<ProjectFile> {
-    const response = await api.put<ProjectFile>(`/projects/${projectId}/files`, fileData);
-    return response.data;
+  async updateFile(projectId: string, filePath: string, content: string): Promise<any> {
+    try {
+      const response = await api.put(`/projects/${projectId}/files`, {
+        filePath,
+        content
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating file:', error);
+      throw error;
+    }
   },
 
   /**
-   * Delete a file or folder
+   * Delete a file
    */
-  async deleteFile(projectId: string, path: string): Promise<void> {
-    await api.delete(`/projects/${projectId}/files`, {
-      params: { path }
-    });
+  async deleteFile(projectId: string, filePath: string): Promise<any> {
+    try {
+      const response = await api.delete(`/projects/${projectId}/files`, {
+        data: { filePath }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      throw error;
+    }
   },
 
   /**

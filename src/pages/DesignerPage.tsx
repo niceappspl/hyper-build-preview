@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import ChatInterface from '../components/ChatInterface';
@@ -7,15 +7,17 @@ import QRCodeModal from '../components/QRCodeModal';
 import FullScreenPreview from '../components/FullScreenPreview';
 import DownloadOptionsModal from '../components/DownloadOptionsModal';
 import Tooltip from '../components/Tooltip';
+import PreviewScreen from '../components/PreviewScreen';
 import { FiUser, FiServer, FiZap, FiKey, FiSettings, FiCode, FiSmartphone, FiDownload, FiFolder, FiFile, 
-         FiChevronRight, FiSearch, FiCopy, FiRefreshCw, FiPlus, FiTrash2, FiSave, FiPlay, FiMaximize, FiLayout } from 'react-icons/fi';
+         FiChevronRight, FiSearch, FiCopy, FiRefreshCw, FiPlus, FiTrash2, FiSave, FiPlay, FiMaximize, FiLayout, FiX } from 'react-icons/fi';
 import { SiSupabase, SiFirebase, SiReact, SiJavascript, SiTypescript, SiCss3 } from 'react-icons/si';
 import { FaDatabase } from 'react-icons/fa';
-import SpotifyMock from '../mocks/SpotifyMock';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { snackService, aiService, projectService } from '../services';
 import { extractProjectId } from '../utils/helpers';
 import toast, { Toaster } from 'react-hot-toast';
+import ProjectEditor from '../components/ProjectEditor';
+import ProjectFileExplorer from '../components/ProjectFileExplorer';
 
 interface LocationState {
   prompt: string;
@@ -42,7 +44,7 @@ const DesignerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'assistant' | 'backend' | 'code'>('assistant');
   const [selectedFile, setSelectedFile] = useState('App.js');
   const [expandedFolders, setExpandedFolders] = useState(['src', 'components']);
-  const [mockType, setMockType] = useState<'default' | 'spotify'>('spotify');
+  const [mockType, setMockType] = useState<'default'>('default');
   const [showDeviceOptions, setShowDeviceOptions] = useState(false);
   const [viewMode, setViewMode] = useState<'app' | 'code' | 'split'>('app');
   const deviceSelectorRef = useRef<HTMLDivElement>(null);
@@ -55,6 +57,12 @@ const DesignerPage: React.FC = () => {
   const [snackUrl, setSnackUrl] = useState<string | undefined>(undefined);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Nowe stany dla pełnoekranowego edytora kodu
+  const [showFullScreenEditor, setShowFullScreenEditor] = useState(false);
+  const [fullScreenEditorFile, setFullScreenEditorFile] = useState<string | null>(null);
+  const [fullScreenEditorContent, setFullScreenEditorContent] = useState<string>('');
+  const [fullScreenEditorIsLoading, setFullScreenEditorIsLoading] = useState<boolean>(false);
 
   // Load project data if we have a projectId
   useEffect(() => {
@@ -94,9 +102,6 @@ const DesignerPage: React.FC = () => {
   const handleChatMessage = (message: string) => {
     console.log('Received message:', message);
     setCurrentPrompt(message);
-    if (message.toLowerCase().includes('spotify')) {
-      setMockType('spotify');
-    }
   };
 
   const toggleFolder = (folder: string) => {
@@ -432,6 +437,42 @@ AppRegistry.registerComponent(appName, () => App);`;
     }
   };
 
+  // Nowa funkcja do otwierania pełnoekranowego edytora kodu
+  const handleOpenFullScreenEditor = useCallback(() => {
+    // Jeśli nie mamy wybranego pliku, otwieramy po prostu edytor z plikiem ustawionym na null
+    setFullScreenEditorFile(selectedFile || null);
+    setShowFullScreenEditor(true);
+  }, [selectedFile]);
+
+  // Obsługa wyboru pliku w pełnoekranowym edytorze
+  const handleFullScreenFileSelect = useCallback((filePath: string) => {
+    setFullScreenEditorFile(filePath);
+    // Aktualizujemy również wybrany plik w głównym interfejsie
+    setSelectedFile(filePath);
+  }, []);
+
+  // Obsługa zapisywania pliku z pełnoekranowego edytora
+  const handleFullScreenSave = useCallback(async (content: string) => {
+    if (!fullScreenEditorFile || !projectId) return;
+
+    setIsSaving(true);
+    try {
+      await projectService.updateFile(projectId, fullScreenEditorFile, content);
+      toast.success('File saved successfully');
+    } catch (error) {
+      console.error('Failed to save file:', error);
+      toast.error('Failed to save file. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [fullScreenEditorFile, projectId]);
+
+  // Funkcja obsługi uruchamiania kodu dla pełnoekranowego edytora
+  const handleRunCode = useCallback(() => {
+    toast.success('Running code...');
+    // Tu będzie implementacja uruchamiania kodu
+  }, []);
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#050505] text-white relative">
       {/* Tło z gradientem i siatką */}
@@ -501,47 +542,13 @@ AppRegistry.registerComponent(appName, () => App);`;
                   {/* Glow effect pod urządzeniem - usunięty */}
                   <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                   
-                  {/* Phone Frame */}
-                  <div className="relative" style={{ width: `${selectedDevice === 'iphone' ? 393 * 0.7 : 393 * 0.7}px`, 
-                                                    height: `${selectedDevice === 'iphone' ? 852 * 0.7 : 852 * 0.7}px` }}>
-                    {/* iPhone Frame */}
-                    <div className="absolute inset-0 pointer-events-none z-10">
-                      <img 
-                        src="/frames/iphone.svg" 
-                        alt="iPhone frame" 
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    
-                    {/* Phone Content */}
-                    <div className="absolute z-0 rounded-[30px] overflow-hidden" style={{ 
-                      top: `${(393 * 0.7) * 0.06}px`, 
-                      left: `${(393 * 0.7) * 0.05}px`, 
-                      width: `${(393 * 0.7) - ((393 * 0.7) * 0.05 * 2)}px`, 
-                      height: `${(852 * 0.7) - ((393 * 0.7) * 0.06) - ((393 * 0.7) * 0.07)}px`
-                    }}>
-                      {mockType === 'spotify' && (
-                        <div className="w-full h-full relative">
-                          <SpotifyMock containerStyle={{ position: 'relative', height: '100%', overflow: 'hidden' }} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  {/* Phone Frame - zastąpiony komponentem PreviewScreen */}
+                  <PreviewScreen prompt={currentPrompt} mockType="default" selectedDevice={selectedDevice} />
                 </motion.div>
               )}
               
               {viewMode === 'code' && (
-                <div className="w-full h-full bg-[#0a0a0a] rounded-xl border border-neutral-800 overflow-hidden">
-                  <div className="h-12 bg-[#111] border-b border-neutral-800 flex items-center px-4">
-                    <span className="text-sm font-medium text-neutral-300 flex items-center">
-                      <SiReact className="text-blue-400 w-4 h-4 mr-2" />
-                      App.js
-                    </span>
-                  </div>
-                  <div className="p-4 text-xs font-mono text-neutral-300 overflow-auto h-[calc(100%-3rem)]">
-                    <pre className="whitespace-pre-wrap">{getFileContent()}</pre>
-                  </div>
-                </div>
+                <ProjectEditor projectId={projectId} />
               )}
               
               {viewMode === 'split' && (
@@ -550,24 +557,9 @@ AppRegistry.registerComponent(appName, () => App);`;
                     <motion.div className="relative scale-75">
                       {/* Glow effect pod urządzeniem - usunięty */}
                       <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
-                      <div className="relative" style={{ width: `${selectedDevice === 'iphone' ? 393 * 0.7 : 393 * 0.7}px`, 
-                                                      height: `${selectedDevice === 'iphone' ? 852 * 0.7 : 852 * 0.7}px` }}>
-                        <div className="absolute inset-0 pointer-events-none z-10">
-                          <img src="/frames/iphone.svg" alt="iPhone frame" className="w-full h-full object-contain" />
-                        </div>
-                        <div className="absolute z-0 rounded-[30px] overflow-hidden" style={{ 
-                          top: `${(393 * 0.7) * 0.06}px`, 
-                          left: `${(393 * 0.7) * 0.05}px`, 
-                          width: `${(393 * 0.7) - ((393 * 0.7) * 0.05 * 2)}px`, 
-                          height: `${(852 * 0.7) - ((393 * 0.7) * 0.06) - ((393 * 0.7) * 0.07)}px`
-                        }}>
-                          {mockType === 'spotify' && (
-                            <div className="w-full h-full relative">
-                              <SpotifyMock containerStyle={{ position: 'relative', height: '100%', overflow: 'hidden' }} />
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      
+                      {/* Phone Frame - zastąpiony komponentem PreviewScreen */}
+                      <PreviewScreen prompt={currentPrompt} mockType="default" selectedDevice={selectedDevice} />
                     </motion.div>
                   </div>
                   <div className="w-1/2 h-full bg-[#0a0a0a] rounded-xl border border-neutral-800 overflow-hidden">
@@ -668,6 +660,25 @@ AppRegistry.registerComponent(appName, () => App);`;
                     <span>Code Editor</span>
                   </div>
                 </button>
+                
+                {/* Fullscreen editor button - only visible when Code Editor tab is active */}
+                {activeTab === 'code' && (
+                  <div className="ml-auto flex items-center pr-4">
+                    <Tooltip content="Open Fullscreen Code Editor" position="bottom">
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center justify-center p-2 rounded-md bg-[#1a1a1a] border border-neutral-700 shadow-lg text-white hover:bg-blue-600/20 hover:border-blue-500/50 transition-all"
+                        onClick={handleOpenFullScreenEditor}
+                      >
+                        <FiMaximize className="w-4 h-4" />
+                      </motion.button>
+                    </Tooltip>
+                  </div>
+                )}
+                
+                {/* Add a spacer div when the button is not visible to maintain layout */}
+                {activeTab !== 'code' && <div className="ml-auto pr-4"></div>}
               </div>
             </div>
             
@@ -679,92 +690,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                   projectId={projectId}
                 />
               ) : activeTab === 'code' ? (
-                <div className="flex-1 h-full flex">
-                  {/* File Explorer */}
-                  <div className="w-[260px] h-full bg-[#0a0a0a] border-r border-neutral-800 flex flex-col">
-                    <div className="p-3 border-b border-neutral-800 flex justify-between items-center bg-gradient-to-r from-[#131313] to-[#0c0c0c]">
-                      <div className="text-sm font-medium text-neutral-300">EXPLORER</div>
-                      <div className="flex space-x-2">
-                        <Tooltip content="New File">
-                          <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
-                            <FiPlus className="w-3.5 h-3.5" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Search Files">
-                          <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
-                            <FiSearch className="w-3.5 h-3.5" />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Refresh">
-                          <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
-                            <FiRefreshCw className="w-3.5 h-3.5" />
-                          </button>
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto py-1 text-neutral-300 bg-gradient-to-b from-[#0c0c0c] to-black">
-                      {/* Niebieskie podświetlenie dla file explorera - podobne do edytora kodu */}
-                      <div className="absolute inset-y-0 left-0 w-[260px] bg-gradient-to-br from-blue-500/5 via-blue-600/5 to-transparent opacity-80 pointer-events-none"></div>
-                      
-                      {renderFileTree(fileStructure)}
-                    </div>
-                  </div>
-                  
-                  {/* Code Editor */}
-                  <div className="flex-1 flex flex-col h-full relative">
-                    {/* Niebieskie podświetlenie dla edytora kodu - podobne do edytora kodu w innych zakładkach */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-blue-600/5 to-transparent opacity-80 pointer-events-none"></div>
-                    
-                    {/* Subtle glow effect dla całego panelu - podobny do efektu kodu */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-r-xl opacity-70 pointer-events-none"></div>
-                    
-                    <div className="px-4 py-3 border-b border-neutral-800 bg-gradient-to-r from-[#131313] to-[#0c0c0c] flex items-center justify-between">
-                      <div className="flex items-center">
-                        {selectedFile === 'App.js' && <SiReact className="text-blue-400 w-5 h-5 mr-2.5" />}
-                        {selectedFile === 'index.js' && <SiJavascript className="text-yellow-400 w-5 h-5 mr-2.5" />}
-                        {selectedFile === 'styles.css' && <SiCss3 className="text-blue-500 w-5 h-5 mr-2.5" />}
-                        <span className="text-sm font-medium">{selectedFile}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Tooltip content="Save file changes">
-                          <motion.button 
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="flex items-center bg-[#111] hover:bg-[#222] text-sm px-3 py-1.5 rounded-md text-neutral-300 border border-neutral-800 transition-all"
-                          >
-                            <FiSave className="w-4 h-4 mr-2" />
-                            Save
-                          </motion.button>
-                        </Tooltip>
-                        <Tooltip content="Run application code">
-                          <motion.button 
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-sm px-3 py-1.5 rounded-md text-white ml-1 shadow-md transition-all"
-                          >
-                            <FiPlay className="w-4 h-4 mr-2" />
-                            Run
-                          </motion.button>
-                        </Tooltip>
-                      </div>
-                    </div>
-                    <div className="flex-1 overflow-auto bg-gradient-to-b from-[#0a0a0a] to-black">
-                      <div className="relative">
-                        {/* Subtle glow for code - jaśniejszy */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-md opacity-70 pointer-events-none"></div>
-                        {renderCodeWithLineNumbers()}
-                      </div>
-                    </div>
-                    <div className="px-4 py-2 border-t border-neutral-800 bg-[#0c0c0c] flex justify-between items-center text-sm text-neutral-500">
-                      <div>Ln 18, Col 24</div>
-                      <div className="flex space-x-4">
-                        <span>Spaces: 2</span>
-                        <span>UTF-8</span>
-                        <span>React</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ProjectEditor projectId={projectId} />
               ) : (
                 <div className="h-full bg-gradient-to-b from-[#0c0c0c] to-black p-8">
                   <div className="mb-8">
@@ -856,6 +782,71 @@ AppRegistry.registerComponent(appName, () => App);`;
         onClose={() => setShowDownloadModal(false)}
         prompt={currentPrompt}
       />
+
+      {/* Pełnoekranowy edytor kodu */}
+      <AnimatePresence>
+        {showFullScreenEditor && (
+          <motion.div 
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Close button */}
+            <motion.button 
+              className="fixed top-6 right-6 p-3 rounded-full bg-black/70 hover:bg-black/90 border border-neutral-700 transition-colors z-[10001] text-white"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => setShowFullScreenEditor(false)}
+              aria-label="Close editor"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FiX className="w-6 h-6" />
+            </motion.button>
+            
+            {/* Poświata za modalem */}
+            <div className="absolute w-[90%] h-[90%] bg-blue-500/5 rounded-3xl blur-xl"></div>
+            
+            {/* Fullscreen editor container */}
+            <motion.div 
+              className="w-[90%] h-[90%] bg-gradient-to-b from-[#101010] to-[#0a0a0a] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden border border-neutral-800 relative z-10"
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.98 }}
+              transition={{ delay: 0.05, duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header z nazwą pliku i przyciskami */}
+              <div className="flex items-center justify-between p-4 border-b border-neutral-800 bg-gradient-to-r from-[#131313] to-[#0c0c0c]">
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-neutral-300">{fullScreenEditorFile || 'Project Editor'}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-sm px-3 py-1.5 rounded-md text-white shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleRunCode}
+                  >
+                    <FiPlay className="w-4 h-4 mr-2" />
+                    Run
+                  </motion.button>
+                </div>
+              </div>
+              
+              {/* Main content area - używamy istniejącego komponentu ProjectEditor */}
+              <div className="flex flex-1 h-[calc(100%-65px)] w-full">
+                <ProjectEditor 
+                  projectId={projectId} 
+                  initialSelectedFile={fullScreenEditorFile || undefined}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
