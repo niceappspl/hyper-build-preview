@@ -69,7 +69,7 @@ const PreviewScreen: React.FC<PreviewScreenProps> = ({ prompt, mockType = 'defau
         }}>
           {mockType === 'spotify' ? (
             <div className="w-full h-full relative">
-              <SpotifyMock containerStyle={{ position: 'relative', height: '100%' }} />
+              <SpotifyMock containerStyle={{ position: 'relative', height: '100%', overflow: 'hidden' }} />
             </div>
           ) : (
             <div className="font-sans h-full flex flex-col">

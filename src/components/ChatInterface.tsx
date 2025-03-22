@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FiSend, FiUser } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { aiService } from '../services';
 
 interface Message {
   id: string;
@@ -11,42 +12,65 @@ interface Message {
 
 interface ChatInterfaceProps {
   initialPrompt?: string;
+  projectId?: string;
+  conversationId?: string;
   onSendMessage?: (message: string) => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
   initialPrompt = '',
+  projectId,
+  conversationId: initialConversationId,
   onSendMessage 
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
+  const [conversationId, setConversationId] = useState<string | undefined>(initialConversationId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
   useEffect(() => {
-    if (initialPrompt && initialPrompt.trim() !== '') {
-      // Add initial prompt directly as first messages
-      const userMessage: Message = {
-        id: '1',
-        content: initialPrompt,
-        sender: 'user',
-        timestamp: new Date()
-      };
-      
-      const aiResponse: Message = {
-        id: '2',
-        content: `I understand. I'll help you build an app that includes: "${initialPrompt}". Would you like to add any other features or requirements?`,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      
-      setMessages([userMessage, aiResponse]);
+    if (initialPrompt && initialPrompt.trim() !== '' && !messages.length) {
+      // If we have an initial prompt and conversation ID, load that conversation
+      if (initialConversationId) {
+        loadConversation(initialConversationId);
+      } else {
+        // Otherwise start with the initial prompt
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          content: initialPrompt,
+          sender: 'user',
+          timestamp: new Date()
+        };
+        
+        setMessages([userMessage]);
+        generateAiResponse(initialPrompt);
+      }
       
       // Notify parent component
       onSendMessage?.(initialPrompt);
     }
-  }, [initialPrompt, onSendMessage]);
+  }, [initialPrompt, initialConversationId, onSendMessage]);
+
+  // Load existing conversation if we have an ID
+  const loadConversation = async (conversationId: string) => {
+    try {
+      const data = await aiService.getConversation(conversationId);
+      
+      // Convert API messages to our format
+      const formattedMessages = data.messages.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        sender: msg.role === 'user' ? 'user' : 'ai' as 'user' | 'ai',
+        timestamp: new Date(msg.createdAt)
+      }));
+      
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+    }
+  };
   
   // Auto-scroll to the last message
   useEffect(() => {
@@ -61,8 +85,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
   
-  const handleSendMessage = (content = inputValue) => {
-    if (!content.trim()) return;
+  const handleSendMessage = async (content = inputValue) => {
+    if (!content.trim() || isAiTyping) return;
     
     const newUserMessage: Message = {
       id: Date.now().toString(),
@@ -74,29 +98,52 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setMessages(prev => [...prev, newUserMessage]);
     setInputValue('');
     
-    // Simulate AI response
-    simulateAiResponse(content);
+    // Generate real AI response
+    generateAiResponse(content);
     
     // Callback
     onSendMessage?.(content);
   };
   
-  const simulateAiResponse = (userMessage: string) => {
+  const generateAiResponse = async (userMessage: string) => {
     setIsAiTyping(true);
     
-    setTimeout(() => {
-      const aiResponse = `I understand. I'll help you build an app that includes: "${userMessage}". Would you like to add any other features or requirements?`;
+    try {
+      const response = await aiService.generateCode({
+        prompt: userMessage,
+        projectId,
+        conversationId,
+        mode: 'create'
+      });
+      
+      // Save the conversation ID if this is our first message
+      if (!conversationId) {
+        setConversationId(response.conversationId);
+      }
       
       const newAiMessage: Message = {
-        id: Date.now().toString(),
-        content: aiResponse,
+        id: response.messageId || Date.now().toString(),
+        content: response.message,
         sender: 'ai',
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, newAiMessage]);
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      
+      // Add a fallback message on error
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: "I'm sorry, I couldn't process your request. Please try again.",
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsAiTyping(false);
-    }, 1500);
+    }
   };
   
   return (

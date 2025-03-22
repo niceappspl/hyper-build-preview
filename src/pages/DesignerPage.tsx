@@ -3,21 +3,28 @@ import { useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import ChatInterface from '../components/ChatInterface';
 import DeviceSelector from '../components/DeviceSelector';
+import QRCodeModal from '../components/QRCodeModal';
+import FullScreenPreview from '../components/FullScreenPreview';
+import DownloadOptionsModal from '../components/DownloadOptionsModal';
+import Tooltip from '../components/Tooltip';
 import { FiUser, FiServer, FiZap, FiKey, FiSettings, FiCode, FiSmartphone, FiDownload, FiFolder, FiFile, 
          FiChevronRight, FiSearch, FiCopy, FiRefreshCw, FiPlus, FiTrash2, FiSave, FiPlay, FiMaximize, FiLayout } from 'react-icons/fi';
 import { SiSupabase, SiFirebase, SiReact, SiJavascript, SiTypescript, SiCss3 } from 'react-icons/si';
 import { FaDatabase } from 'react-icons/fa';
 import SpotifyMock from '../mocks/SpotifyMock';
 import { motion } from 'framer-motion';
+import { snackService, aiService, projectService } from '../services';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface LocationState {
   prompt: string;
   isPublic: boolean;
+  projectId?: string;
 }
 
 const DesignerPage: React.FC = () => {
   const location = useLocation();
-  const { prompt: initialPrompt, isPublic } = (location.state as LocationState) || { prompt: '', isPublic: false };
+  const { prompt: initialPrompt, isPublic, projectId: initialProjectId } = (location.state as LocationState) || { prompt: '', isPublic: false };
   const [currentPrompt, setCurrentPrompt] = useState(initialPrompt);
   const [selectedDevice, setSelectedDevice] = useState<'iphone' | 'android'>('iphone');
   const [activeTab, setActiveTab] = useState<'assistant' | 'backend' | 'code'>('assistant');
@@ -27,6 +34,43 @@ const DesignerPage: React.FC = () => {
   const [showDeviceOptions, setShowDeviceOptions] = useState(false);
   const [viewMode, setViewMode] = useState<'app' | 'code' | 'split'>('app');
   const deviceSelectorRef = useRef<HTMLDivElement>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showFullScreenPreview, setShowFullScreenPreview] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [currentProject, setCurrentProject] = useState<any>(null);
+  const [projectId, setProjectId] = useState<string | undefined>(initialProjectId);
+  const [snackId, setSnackId] = useState<string | undefined>(undefined);
+  const [snackUrl, setSnackUrl] = useState<string | undefined>(undefined);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | undefined>(undefined);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load project data if we have a projectId
+  useEffect(() => {
+    const loadProject = async () => {
+      if (projectId) {
+        try {
+          const project = await projectService.getProject(projectId);
+          setCurrentProject(project);
+          
+          // Also check if the project has a snack
+          try {
+            const snackData = await snackService.getSnackUrl(projectId);
+            if (snackData) {
+              setSnackId(snackData.snackId);
+              setSnackUrl(snackData.snackUrl);
+              setQrCodeUrl(snackData.qrCodeUrl);
+            }
+          } catch (error) {
+            console.log('No existing snack found for this project');
+          }
+        } catch (error) {
+          console.error('Error loading project:', error);
+        }
+      }
+    };
+    
+    loadProject();
+  }, [projectId]);
 
   const handleChatMessage = (message: string) => {
     console.log('Received message:', message);
@@ -287,6 +331,79 @@ AppRegistry.registerComponent(appName, () => App);`;
     );
   };
 
+  const handleQRModal = async () => {
+    if (!projectId) {
+      // Handle the case where no project is loaded - create a temporary one
+      try {
+        const newProject = await projectService.createProject({
+          name: `${currentPrompt.substring(0, 30)}...`,
+          description: currentPrompt,
+          public: true
+        });
+        
+        setCurrentProject(newProject);
+        setProjectId(newProject.id);
+        
+        // Create a snack for this project
+        const snackResponse = await snackService.createSnack(newProject.id);
+        setSnackId(snackResponse.snackId);
+        setSnackUrl(snackResponse.snackUrl);
+        setQrCodeUrl(snackResponse.qrCodeUrl);
+        setShowQRModal(true);
+      } catch (error) {
+        console.error('Error creating project/snack:', error);
+        // Show an error toast or notification here
+      }
+    } else {
+      // Project already exists, get or update the snack
+      try {
+        // If we already have a snack ID, update it, otherwise create a new one
+        const snackResponse = snackId 
+          ? await snackService.updateSnack({ projectId }) 
+          : await snackService.createSnack(projectId);
+        
+        setSnackId(snackResponse.snackId);
+        setSnackUrl(snackResponse.snackUrl);
+        setQrCodeUrl(snackResponse.qrCodeUrl);
+        setShowQRModal(true);
+      } catch (error) {
+        console.error('Error getting/updating snack:', error);
+        // Show an error toast or notification here
+      }
+    }
+  };
+
+  // Add a handler for saving the project
+  const handleSaveProject = async () => {
+    setIsSaving(true);
+    
+    try {
+      if (projectId) {
+        // Update existing project
+        await projectService.updateProject(projectId, {
+          name: currentProject?.name || `${currentPrompt.substring(0, 30)}...`,
+          description: currentPrompt
+        });
+        toast.success('Project saved successfully');
+      } else {
+        // Create new project
+        const newProject = await projectService.createProject({
+          name: `${currentPrompt.substring(0, 30)}...`,
+          description: currentPrompt,
+          public: !!isPublic
+        });
+        
+        setCurrentProject(newProject);
+        setProjectId(newProject.id);
+        toast.success('New project created successfully');
+      }
+    } catch (error) {
+      console.error('Error saving project:', error);
+      toast.error('Failed to save project');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#050505] text-white relative">
@@ -303,7 +420,15 @@ AppRegistry.registerComponent(appName, () => App);`;
         <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-purple-400/20 to-cyan-500/20 rounded-full blur-[100px] opacity-80" />
       </div>
       
-      <Header variant="designer" projectName="App Designer" isPublic={isPublic} />
+      <Toaster position="top-center" />
+      
+      <Header 
+        variant="designer" 
+        projectName={currentProject?.name || "App Designer"} 
+        isPublic={isPublic} 
+        onSave={handleSaveProject}
+        isSaving={isSaving}
+      />
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-10 px-6 py-3">
         {/* Główny kontener z podglądem urządzenia i interfejsem czatu */}
@@ -316,39 +441,15 @@ AppRegistry.registerComponent(appName, () => App);`;
                 Device Preview
               </h3>
               
-              <div className="flex items-center space-x-2">
-                {/* Przyciski trybu podglądu */}
-                <div className="flex bg-[#111] rounded-lg border border-neutral-800 p-0.5">
-                  <button 
-                    className={`px-2 py-1 text-xs rounded-md transition-colors ${viewMode === 'app' ? 'bg-blue-500/20 text-white' : 'text-neutral-400 hover:text-white'}`}
-                    onClick={() => setViewMode('app')}
-                  >
-                    App
-                  </button>
-                  <button 
-                    className={`px-2 py-1 text-xs rounded-md transition-colors ${viewMode === 'code' ? 'bg-blue-500/20 text-white' : 'text-neutral-400 hover:text-white'}`}
-                    onClick={() => setViewMode('code')}
-                  >
-                    Code
-                  </button>
-                  <button 
-                    className={`px-2 py-1 text-xs rounded-md transition-colors ${viewMode === 'split' ? 'bg-blue-500/20 text-white' : 'text-neutral-400 hover:text-white'}`}
-                    onClick={() => setViewMode('split')}
-                  >
-                    Split
-                  </button>
-                </div>
-              
-                {/* Nowy komponent DeviceSelector */}
-                <DeviceSelector 
-                  selectedDevice={selectedDevice}
-                  onChange={setSelectedDevice}
-                />
-              </div>
+              {/* DeviceSelector component */}
+              <DeviceSelector 
+                selectedDevice={selectedDevice}
+                onChange={setSelectedDevice}
+              />
             </div>
             
             {/* Renderowanie podglądu urządzenia z nowym tłem */}
-            <div className="flex-1 flex justify-center items-center p-8 overflow-auto relative bg-[#080808]">
+            <div className="flex-1 flex justify-center items-center p-8 overflow-hidden relative bg-[#080808]">
               {/* Efekt gradientu i świecenia dla tła panelu */}
               <div className="absolute inset-0 overflow-hidden">
                 {/* Gradient nakładka */}
@@ -394,7 +495,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                     }}>
                       {mockType === 'spotify' && (
                         <div className="w-full h-full relative">
-                          <SpotifyMock containerStyle={{ position: 'relative', height: '100%' }} />
+                          <SpotifyMock containerStyle={{ position: 'relative', height: '100%', overflow: 'hidden' }} />
                         </div>
                       )}
                     </div>
@@ -435,7 +536,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                         }}>
                           {mockType === 'spotify' && (
                             <div className="w-full h-full relative">
-                              <SpotifyMock containerStyle={{ position: 'relative', height: '100%' }} />
+                              <SpotifyMock containerStyle={{ position: 'relative', height: '100%', overflow: 'hidden' }} />
                             </div>
                           )}
                         </div>
@@ -456,37 +557,43 @@ AppRegistry.registerComponent(appName, () => App);`;
                 </div>
               )}
               
-              {/* Floating Action Buttons - przeniesione z nagłówka */}
+              {/* Floating Action Buttons */}
               <div className="absolute bottom-6 right-6 flex flex-col space-y-3">
-                <motion.button 
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center p-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg text-white"
-                  title="Export Application"
-                >
-                  <FiDownload className="w-5 h-5" />
-                </motion.button>
+                <Tooltip content="Download Application" position="left">
+                  <motion.button 
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center p-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg text-white"
+                    onClick={() => setShowDownloadModal(true)}
+                  >
+                    <FiDownload className="w-5 h-5" />
+                  </motion.button>
+                </Tooltip>
                 
-                <motion.button 
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center p-3 rounded-full bg-[#1a1a1a] border border-neutral-700 shadow-lg text-white"
-                  title="Open on Device"
-                >
-                  <FiSmartphone className="w-5 h-5" />
-                </motion.button>
+                <Tooltip content="Open on Device" position="left">
+                  <motion.button 
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center p-3 rounded-full bg-[#1a1a1a] border border-neutral-700 shadow-lg text-white"
+                    onClick={handleQRModal}
+                  >
+                    <FiSmartphone className="w-5 h-5" />
+                  </motion.button>
+                </Tooltip>
               </div>
               
-              {/* Dodatkowy floating button po lewej stronie */}
+              {/* Full screen preview button */}
               <div className="absolute bottom-6 left-6">
-                <motion.button 
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center p-3 rounded-full bg-[#1a1a1a] border border-neutral-700 shadow-lg text-white"
-                  title="Preview Options"
-                >
-                  <FiMaximize className="w-5 h-5" />
-                </motion.button>
+                <Tooltip content="Full Screen Preview" position="right">
+                  <motion.button 
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center p-3 rounded-full bg-[#1a1a1a] border border-neutral-700 shadow-lg text-white"
+                    onClick={() => setShowFullScreenPreview(true)}
+                  >
+                    <FiMaximize className="w-5 h-5" />
+                  </motion.button>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -542,6 +649,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                 <ChatInterface 
                   initialPrompt={initialPrompt}
                   onSendMessage={handleChatMessage}
+                  projectId={projectId}
                 />
               ) : activeTab === 'code' ? (
                 <div className="flex-1 h-full flex">
@@ -550,15 +658,21 @@ AppRegistry.registerComponent(appName, () => App);`;
                     <div className="p-3 border-b border-neutral-800 flex justify-between items-center bg-gradient-to-r from-[#131313] to-[#0c0c0c]">
                       <div className="text-sm font-medium text-neutral-300">EXPLORER</div>
                       <div className="flex space-x-2">
-                        <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
-                          <FiPlus className="w-3.5 h-3.5" />
-                        </button>
-                        <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
-                          <FiSearch className="w-3.5 h-3.5" />
-                        </button>
-                        <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
-                          <FiRefreshCw className="w-3.5 h-3.5" />
-                        </button>
+                        <Tooltip content="New File">
+                          <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
+                            <FiPlus className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Search Files">
+                          <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
+                            <FiSearch className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Refresh">
+                          <button className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-blue-400 transition-colors">
+                            <FiRefreshCw className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
                     <div className="flex-1 overflow-y-auto py-1 text-neutral-300 bg-gradient-to-b from-[#0c0c0c] to-black">
@@ -585,22 +699,26 @@ AppRegistry.registerComponent(appName, () => App);`;
                         <span className="text-sm font-medium">{selectedFile}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <motion.button 
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="flex items-center bg-[#111] hover:bg-[#222] text-sm px-3 py-1.5 rounded-md text-neutral-300 border border-neutral-800 transition-all"
-                        >
-                          <FiSave className="w-4 h-4 mr-2" />
-                          Save
-                        </motion.button>
-                        <motion.button 
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-sm px-3 py-1.5 rounded-md text-white ml-1 shadow-md transition-all"
-                        >
-                          <FiPlay className="w-4 h-4 mr-2" />
-                          Run
-                        </motion.button>
+                        <Tooltip content="Save file changes">
+                          <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex items-center bg-[#111] hover:bg-[#222] text-sm px-3 py-1.5 rounded-md text-neutral-300 border border-neutral-800 transition-all"
+                          >
+                            <FiSave className="w-4 h-4 mr-2" />
+                            Save
+                          </motion.button>
+                        </Tooltip>
+                        <Tooltip content="Run application code">
+                          <motion.button 
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-sm px-3 py-1.5 rounded-md text-white ml-1 shadow-md transition-all"
+                          >
+                            <FiPlay className="w-4 h-4 mr-2" />
+                            Run
+                          </motion.button>
+                        </Tooltip>
                       </div>
                     </div>
                     <div className="flex-1 overflow-auto bg-gradient-to-b from-[#0a0a0a] to-black">
@@ -686,6 +804,31 @@ AppRegistry.registerComponent(appName, () => App);`;
           </div>
         </div>
       </div>
+      
+      {/* Modals */}
+      <QRCodeModal 
+        isVisible={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        deviceType={selectedDevice}
+        mockType={mockType}
+        prompt={currentPrompt}
+        snackUrl={snackUrl}
+        qrCodeUrl={qrCodeUrl}
+      />
+      
+      <FullScreenPreview 
+        isVisible={showFullScreenPreview}
+        onClose={() => setShowFullScreenPreview(false)}
+        deviceType={selectedDevice}
+        mockType={mockType}
+        prompt={currentPrompt}
+      />
+      
+      <DownloadOptionsModal 
+        isVisible={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        prompt={currentPrompt}
+      />
     </div>
   );
 };
