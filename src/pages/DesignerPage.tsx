@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import ChatInterface from '../components/ChatInterface';
 import DeviceSelector from '../components/DeviceSelector';
@@ -14,6 +14,7 @@ import { FaDatabase } from 'react-icons/fa';
 import SpotifyMock from '../mocks/SpotifyMock';
 import { motion } from 'framer-motion';
 import { snackService, aiService, projectService } from '../services';
+import { extractProjectId } from '../utils/helpers';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface LocationState {
@@ -24,7 +25,18 @@ interface LocationState {
 
 const DesignerPage: React.FC = () => {
   const location = useLocation();
-  const { prompt: initialPrompt, isPublic, projectId: initialProjectId } = (location.state as LocationState) || { prompt: '', isPublic: false };
+  const [searchParams] = useSearchParams();
+  const projectIdFromUrl = searchParams.get('id');
+  
+  // Jeśli mamy ID w URL, wyekstrahuj faktyczne ID projektu (może być częścią przyjaznego URL)
+  const extractedProjectId = projectIdFromUrl ? extractProjectId(projectIdFromUrl) : undefined;
+  
+  const locationState = location.state as LocationState | null;
+  const initialPrompt = locationState?.prompt || '';
+  const initialIsPublic = locationState?.isPublic || false;
+  // Preferujemy ID z state, ponieważ może być nowszej niż URL (np. gdy URL to slug, a state to czyste ID)
+  const initialProjectId = locationState?.projectId || extractedProjectId;
+  
   const [currentPrompt, setCurrentPrompt] = useState(initialPrompt);
   const [selectedDevice, setSelectedDevice] = useState<'iphone' | 'android'>('iphone');
   const [activeTab, setActiveTab] = useState<'assistant' | 'backend' | 'code'>('assistant');
@@ -52,6 +64,11 @@ const DesignerPage: React.FC = () => {
           const project = await projectService.getProject(projectId);
           setCurrentProject(project);
           
+          // Jeśli mamy projekt, ale nie mamy promptu, użyj opisu projektu
+          if (!currentPrompt && project.description) {
+            setCurrentPrompt(project.description);
+          }
+          
           // Also check if the project has a snack
           try {
             const snackData = await snackService.getSnackUrl(projectId);
@@ -59,9 +76,11 @@ const DesignerPage: React.FC = () => {
               setSnackId(snackData.snackId);
               setSnackUrl(snackData.snackUrl);
               setQrCodeUrl(snackData.qrCodeUrl);
+            } else {
+              console.log('No existing snack found for this project');
             }
           } catch (error) {
-            console.log('No existing snack found for this project');
+            console.log('Error fetching snack data:', error);
           }
         } catch (error) {
           console.error('Error loading project:', error);
@@ -70,7 +89,7 @@ const DesignerPage: React.FC = () => {
     };
     
     loadProject();
-  }, [projectId]);
+  }, [projectId, currentPrompt]);
 
   const handleChatMessage = (message: string) => {
     console.log('Received message:', message);
@@ -346,13 +365,17 @@ AppRegistry.registerComponent(appName, () => App);`;
         
         // Create a snack for this project
         const snackResponse = await snackService.createSnack(newProject.id);
-        setSnackId(snackResponse.snackId);
-        setSnackUrl(snackResponse.snackUrl);
-        setQrCodeUrl(snackResponse.qrCodeUrl);
-        setShowQRModal(true);
+        if (snackResponse) {
+          setSnackId(snackResponse.snackId);
+          setSnackUrl(snackResponse.snackUrl);
+          setQrCodeUrl(snackResponse.qrCodeUrl);
+          setShowQRModal(true);
+        } else {
+          toast.error('Snack service is currently unavailable');
+        }
       } catch (error) {
         console.error('Error creating project/snack:', error);
-        // Show an error toast or notification here
+        toast.error('Failed to create project or snack');
       }
     } else {
       // Project already exists, get or update the snack
@@ -362,13 +385,17 @@ AppRegistry.registerComponent(appName, () => App);`;
           ? await snackService.updateSnack({ projectId }) 
           : await snackService.createSnack(projectId);
         
-        setSnackId(snackResponse.snackId);
-        setSnackUrl(snackResponse.snackUrl);
-        setQrCodeUrl(snackResponse.qrCodeUrl);
-        setShowQRModal(true);
+        if (snackResponse) {
+          setSnackId(snackResponse.snackId);
+          setSnackUrl(snackResponse.snackUrl);
+          setQrCodeUrl(snackResponse.qrCodeUrl);
+          setShowQRModal(true);
+        } else {
+          toast.error('Snack service is currently unavailable');
+        }
       } catch (error) {
         console.error('Error getting/updating snack:', error);
-        // Show an error toast or notification here
+        toast.error('Failed to get or update snack');
       }
     }
   };
@@ -390,7 +417,7 @@ AppRegistry.registerComponent(appName, () => App);`;
         const newProject = await projectService.createProject({
           name: `${currentPrompt.substring(0, 30)}...`,
           description: currentPrompt,
-          public: !!isPublic
+          public: !!initialIsPublic
         });
         
         setCurrentProject(newProject);
@@ -425,7 +452,7 @@ AppRegistry.registerComponent(appName, () => App);`;
       <Header 
         variant="designer" 
         projectName={currentProject?.name || "App Designer"} 
-        isPublic={isPublic} 
+        isPublic={initialIsPublic} 
         onSave={handleSaveProject}
         isSaving={isSaving}
       />

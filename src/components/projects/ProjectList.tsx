@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiFolder, FiEdit, FiTrash2, FiPlay, FiClock, FiPlus } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiFolder, FiEdit, FiTrash2, FiPlay, FiClock, FiPlus, FiAlertTriangle } from 'react-icons/fi';
 import { projectService } from '../../services';
 import toast from 'react-hot-toast';
 
@@ -24,6 +24,9 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,11 +35,20 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
 
   const loadProjects = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const userProjects = await projectService.getAllProjects();
-      setProjects(userProjects);
+      console.log('Loaded projects:', userProjects, 'Count:', userProjects.length);
+      
+      if (!Array.isArray(userProjects)) {
+        setError('Invalid response format: expected an array of projects');
+        setProjects([]);
+      } else {
+        setProjects(userProjects);
+      }
     } catch (error) {
       console.error('Error loading projects:', error);
+      setError('Failed to load your projects');
       toast.error('Failed to load your projects');
     } finally {
       setIsLoading(false);
@@ -47,7 +59,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
     if (onProjectSelected) {
       onProjectSelected(project);
     } else {
-      navigate('/designer', { 
+      navigate(`/designer/${project.id}`, { 
         state: { 
           prompt: project.description || project.name, 
           isPublic: project.public,
@@ -57,19 +69,29 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
     }
   };
 
-  const handleDeleteProject = async (projectId: string, e: React.MouseEvent) => {
+  const openDeleteModal = (project: Project, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent opening the project when clicking delete
+    setProjectToDelete(project);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setProjectToDelete(null);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
     
-    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      try {
-        await projectService.deleteProject(projectId);
-        toast.success('Project deleted successfully');
-        // Remove project from state
-        setProjects(projects.filter(p => p.id !== projectId));
-      } catch (error) {
-        console.error('Error deleting project:', error);
-        toast.error('Failed to delete project');
-      }
+    try {
+      await projectService.deleteProject(projectToDelete.id);
+      toast.success('Project deleted successfully');
+      // Remove project from state
+      setProjects(projects.filter(p => p.id !== projectToDelete.id));
+      closeDeleteModal();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Failed to delete project');
     }
   };
 
@@ -85,7 +107,15 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-semibold mb-4 text-white">My Projects</h2>
+      <h2 className="text-xl font-semibold mb-4 text-white">
+        My Projects {projects.length > 0 && `(${projects.length})`}
+      </h2>
+      
+      {error && (
+        <div className="bg-red-900/20 border border-red-800 text-red-200 p-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
       
       {isLoading ? (
         <div className="flex justify-center items-center h-32">
@@ -158,7 +188,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
                     className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/designer`, { 
+                      navigate(`/designer/${project.id}`, { 
                         state: { 
                           prompt: project.description || project.name,
                           isPublic: project.public,
@@ -174,7 +204,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     className="p-1.5 rounded-md text-neutral-400 hover:text-red-500 hover:bg-neutral-800"
-                    onClick={(e) => handleDeleteProject(project.id, e)}
+                    onClick={(e) => openDeleteModal(project, e)}
                   >
                     <FiTrash2 className="w-4 h-4" />
                   </motion.button>
@@ -195,7 +225,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
       )}
       
       {/* Add a refresh button */}
-      {!isLoading && projects.length > 0 && (
+      {!isLoading && (
         <div className="mt-4 flex justify-center">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -207,6 +237,63 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
           </motion.button>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && projectToDelete && (
+          <motion.div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="w-full max-w-md bg-[#0a0a0a] border border-[#222] rounded-xl shadow-2xl overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="border-b border-[#222] px-6 py-4 flex justify-between items-center">
+                <h2 className="text-lg font-bold text-white flex items-center">
+                  <FiAlertTriangle className="mr-2 text-red-500" />
+                  Delete Project
+                </h2>
+                <button 
+                  onClick={closeDeleteModal}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  &times;
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <p className="text-white mb-4">
+                  Are you sure you want to delete <span className="font-semibold">{projectToDelete.name}</span>?
+                </p>
+                <p className="text-neutral-400 text-sm mb-6">
+                  This action cannot be undone. The project and all associated data will be permanently deleted.
+                </p>
+                
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={closeDeleteModal}
+                    className="px-4 py-2 bg-[#191919] hover:bg-[#252525] border border-[#333] text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteProject}
+                    className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    Delete Project
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

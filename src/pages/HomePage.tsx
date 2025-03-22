@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import WorkspaceLoader from '../components/WorkspaceLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const HomePage: React.FC = () => {
@@ -68,63 +69,11 @@ const HomePage: React.FC = () => {
         <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-blue-400/10 to-cyan-500/10 rounded-full blur-[100px] animate-float-delayed" />
       </div>
 
+      {/* Workspace Loader Component */}
+      <WorkspaceLoader isLoading={isBuilding} buildProgress={buildProgress} prompt={prompt} />
+
       <AnimatePresence>
-        {isBuilding ? (
-          <motion.div 
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="w-full max-w-md px-6">
-              <motion.div 
-                className="mb-8 text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h2 className="text-2xl font-bold text-white mb-2">Preparing your workspace</h2>
-                <p className="text-gray-400">HyperBuild is generating your app components...</p>
-              </motion.div>
-              
-              <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden mb-4">
-                <motion.div 
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-cyan-500"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${buildProgress}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-              
-              <div className="text-right text-sm text-gray-400 mb-8">
-                {Math.round(buildProgress)}% complete
-              </div>
-              
-              <div className="bg-[#0a0a0a] border border-[#222] rounded-lg p-4 font-mono text-xs text-gray-400 h-64 overflow-hidden">
-                <div className="animate-typing">
-                  <p className="mb-1 text-blue-400">// Setting up development environment</p>
-                  <p className="mb-1">Initializing iOS simulator for iPhone 15 Pro...</p>
-                  <p className="mb-1">Configuring Xcode build tools...</p>
-                  <p className="mb-1 text-blue-400">// Preparing Android environment</p>
-                  <p className="mb-1">Setting up Android SDK tools...</p>
-                  <p className="mb-1">Configuring Pixel 7 emulator...</p>
-                  <p className="mb-1 text-blue-400">// Installing dependencies</p>
-                  <p className="mb-1">Installing React Native dependencies...</p>
-                  <p className="mb-1">Setting up native modules...</p>
-                  <p className="mb-1 text-blue-400">// Configuring build pipeline</p>
-                  <p className="mb-1">Setting up CI/CD workflow...</p>
-                  <p className="mb-1">Configuring app signing certificates...</p>
-                  <p className="mb-1 text-green-400">✓ iOS environment ready</p>
-                  <p className="mb-1 text-green-400">✓ Android environment ready</p>
-                  <p className="mb-1 text-green-400">✓ Dependencies installed</p>
-                  <p className="mb-1 text-blue-400">// Preparing workspace</p>
-                  <p className="mb-1">Configuring hot reload...</p>
-                  <p className="mb-1">Setting up debugging tools...</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
+        {!isBuilding && (
           <main className="relative z-10 flex flex-col items-center pt-18 md:pt-20 px-4">
             {/* Logo with Gradient */}
             <motion.div 

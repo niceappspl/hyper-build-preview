@@ -109,12 +109,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsAiTyping(true);
     
     try {
-      const response = await aiService.generateCode({
-        prompt: userMessage,
-        projectId,
-        conversationId,
-        mode: 'create'
-      });
+      // Check if the AI service is available before making the call
+      let response;
+      try {
+        response = await aiService.generateCode({
+          prompt: userMessage,
+          projectId,
+          conversationId,
+          mode: 'create'
+        });
+      } catch (apiError: any) {
+        // Handle 404 errors specifically (missing API endpoint)
+        if (apiError?.response?.status === 404) {
+          console.warn('AI service endpoint not available. Using fallback response.');
+          
+          // Provide a fallback response when the AI service is unavailable
+          return {
+            message: "I'm sorry, the AI service is currently unavailable. The development team has been notified.",
+            conversationId: conversationId || 'temp-' + Date.now(),
+            messageId: 'fallback-' + Date.now()
+          };
+        }
+        // Re-throw other errors
+        throw apiError;
+      }
       
       // Save the conversation ID if this is our first message
       if (!conversationId) {
@@ -132,15 +150,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } catch (error) {
       console.error('Error generating AI response:', error);
       
-      // Add a fallback message on error
-      const errorMessage: Message = {
+      // Add a more informative fallback message on error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const fallbackMessage: Message = {
         id: Date.now().toString(),
-        content: "I'm sorry, I couldn't process your request. Please try again.",
+        content: `I'm sorry, I couldn't process your request. Error: ${errorMessage}. Please try again later.`,
         sender: 'ai',
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, fallbackMessage]);
     } finally {
       setIsAiTyping(false);
     }

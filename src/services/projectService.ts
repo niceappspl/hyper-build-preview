@@ -1,5 +1,5 @@
 import api from './api';
-
+import { AxiosError } from 'axios';
 interface Project {
   id: string;
   name: string;
@@ -67,8 +67,73 @@ const projectService = {
    * Create a new project with template
    */
   async createProject(data: CreateProjectData): Promise<Project> {
-    const response = await api.post<Project>('/projects', data);
-    return response.data;
+    try {
+      // Ensure we have valid data
+      if (!data.name) {
+        throw new Error('Project name is required');
+      }
+      
+      console.log('Creating project with data:', data);
+      const response = await api.post<Project>('/projects', data);
+      
+      // Validate response
+      if (!response.data) {
+        throw new Error('No data returned from API');
+      }
+      
+      // Check if returned project has an ID
+      if (!response.data.id) {
+        console.warn('Invalid project data received:', response.data);
+        
+        // Generate a temporary ID if none is provided by the server
+        // This is a fallback to prevent the UI from breaking
+        const tempProject = {
+          ...response.data,
+          id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          createdAt: response.data.createdAt || new Date().toISOString(),
+          updatedAt: response.data.updatedAt || new Date().toISOString(),
+        };
+        
+        console.log('Using temporary project with generated ID:', tempProject);
+        
+        // Try to find the real project ID after creation
+        try {
+          console.log('Attempting to fetch recently created projects to find the real ID...');
+          const projects = await this.getAllProjects();
+          const recentProject = projects.find(p => p.name === data.name);
+          
+          if (recentProject && recentProject.id) {
+            console.log('Found matching project with proper ID:', recentProject);
+            return recentProject;
+          }
+        } catch (fetchError) {
+          console.error('Failed to fetch recent projects:', fetchError);
+          // Continue with the temporary project 
+        }
+        
+        return tempProject as Project;
+      }
+      
+      console.log('Project created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in createProject service:', error);
+      if (error instanceof AxiosError) {
+        // Handle API-specific errors
+        const statusCode = error.response?.status;
+        const errorMessage = error.response?.data?.message || error.message;
+        
+        if (statusCode === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        } else if (statusCode === 403) {
+          throw new Error('You do not have permission to create projects.');
+        } else {
+          throw new Error(`API Error (${statusCode}): ${errorMessage}`);
+        }
+      }
+      // Re-throw the error for the component to handle
+      throw error;
+    }
   },
 
   /**
@@ -135,6 +200,38 @@ const projectService = {
     await api.delete(`/projects/${projectId}/files`, {
       params: { path }
     });
+  },
+
+  /**
+   * Weryfikuje, czy zalogowany użytkownik jest właścicielem projektu
+   * Wykorzystuje endpoint API, który sprawdza to po stronie serwera
+   */
+  async verifyProjectOwnership(projectId: string): Promise<boolean> {
+    try {
+      // Wywołaj endpoint API, który sprawdza właściciela projektu
+      // Token JWT jest automatycznie dołączany przez interceptor w api.ts
+      const response = await api.get<{ isOwner: boolean }>(`/projects/${projectId}/verify-ownership`);
+      return response.data.isOwner;
+    } catch (error) {
+      console.error('Error verifying project ownership:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Pobiera projekt z weryfikacją właściciela
+   */
+  async getProjectWithOwnershipCheck(projectId: string): Promise<Project> {
+    // Możemy użyć specjalnego endpointu, który zwraca projekt tylko jeśli użytkownik jest właścicielem
+    try {
+      const response = await api.get<Project>(`/projects/${projectId}/secure`);
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response && error.response.status === 403) {
+        throw new Error('Unauthorized: You do not have permission to access this project');
+      }
+      throw error;
+    }
   }
 };
 

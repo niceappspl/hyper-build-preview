@@ -7,9 +7,18 @@ import Footer from '../components/Footer';
 import { authService } from '../services';
 import toast, { Toaster } from 'react-hot-toast';
 
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const [userData, setUserData] = useState<{id: string; name: string; email: string; role: string}>({
+  const [userData, setUserData] = useState<UserData>({
     id: '',
     name: '',
     email: '',
@@ -38,7 +47,10 @@ const ProfilePage: React.FC = () => {
       try {
         setIsLoading(true);
         const user = await authService.getCurrentUser();
-        setUserData(user);
+        setUserData({
+          ...user,
+          role: user.role || 'user' // Domyślna wartość jeśli brak
+        });
         setName(user.name);
         setEmail(user.email);
         setIsLoading(false);
@@ -124,7 +136,7 @@ const ProfilePage: React.FC = () => {
     
     // Jeśli nie ma zmian, wyświetl komunikat
     if (Object.keys(updateData).length === 0) {
-      toast.info('No changes to save');
+      toast('No changes to save', { icon: '⚠️' });
       return;
     }
     
@@ -132,7 +144,11 @@ const ProfilePage: React.FC = () => {
       setIsSaving(true);
       const response = await authService.updateUser(updateData);
       
-      setUserData(response.user);
+      // Aktualizacja danych użytkownika
+      setUserData({
+        ...response.user,
+        role: response.user.role || userData.role || 'user'
+      });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -251,7 +267,7 @@ const ProfilePage: React.FC = () => {
                         <span className="text-neutral-400">Account Type:</span>
                       </div>
                       <div className="ml-3 flex-grow">
-                        <span className="capitalize text-neutral-300">{userData.role}</span>
+                        <span className="capitalize text-neutral-300">{userData.role || 'user'}</span>
                       </div>
                     </div>
                   </div>

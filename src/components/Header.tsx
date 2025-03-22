@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiCopy, FiArrowLeft, FiLogIn, FiUserPlus, FiSave, FiFolder } from 'react-icons/fi';
+import { FiCopy, FiArrowLeft, FiLogIn, FiUserPlus, FiSave, FiFolder, FiUser } from 'react-icons/fi';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../services';
 
@@ -61,6 +61,11 @@ const Header: React.FC<HeaderProps> = ({
     setIsLoggedIn(false);
     setShowLogoutModal(false);
     navigate('/');
+  };
+  
+  const handleUserMenuToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDropdownOpen(!isDropdownOpen);
   };
   
   return (
@@ -249,68 +254,46 @@ const Header: React.FC<HeaderProps> = ({
           {!isAuthPage && (
             <>
               {isLoggedIn ? (
-                <div className="flex items-center space-x-3">
-                  <motion.div
+                <div className="relative">
+                  <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    className="flex items-center px-3 py-1.5 bg-[#101010] hover:bg-[#181818] rounded-lg text-sm text-white transition-colors ml-3 border border-neutral-800"
+                    onClick={handleUserMenuToggle}
                   >
-                    <Link 
-                      to="/projects" 
-                      className="flex items-center px-3 py-1.5 bg-[#111] hover:bg-[#191919] rounded-lg text-sm text-white border border-[#222] transition-colors"
-                    >
-                      <FiFolder className="w-4 h-4 mr-1.5" />
-                      <span>My Projects</span>
-                    </Link>
-                  </motion.div>
+                    <span className="mr-2">{userData?.name || 'User'}</span>
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white uppercase font-semibold text-xs">
+                      {userData?.name ? userData.name.charAt(0) : 'U'}
+                    </div>
+                  </motion.button>
                   
-                  {/* User profile button with dropdown - shown when user is authenticated */}
-                  <div className="relative">
-                    <motion.button 
-                      className="flex items-center space-x-1 px-3 py-1.5 bg-[#111] hover:bg-[#191919] rounded-lg text-sm text-white transition-all font-medium border border-[#222] relative group"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsDropdownOpen(!isDropdownOpen);
-                      }}
-                    >
-                      {/* Subtle glow effect on hover */}
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg opacity-0 group-hover:opacity-100 blur-sm transition-opacity"></div>
-                      <div className="relative flex items-center space-x-1">
-                        <span>{userData?.name || userData?.email || 'User'}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16" className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>
-                          <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
-                        </svg>
-                      </div>
-                    </motion.button>
-                    
-                    {/* Dropdown menu */}
-                    {isDropdownOpen && (
-                      <div className="absolute right-0 mt-1 w-48 bg-[#131313] border border-[#222] rounded-lg shadow-lg overflow-hidden z-50">
-                        <div className="py-1">
-                          <Link 
-                            to="/profile" 
-                            className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                            </svg>
-                            Profile
-                          </Link>
-                        
-                          <button 
-                            onClick={handleLogout} 
-                            className="flex w-full items-center px-4 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            Log Out
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-[#0a0a0a] border border-neutral-800 rounded-lg shadow-xl z-50 py-1">
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#181818] hover:text-white transition-colors flex items-center"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <FiUser className="mr-2" />
+                        Profile
+                      </Link>
+                      <Link
+                        to="/projects"
+                        className="block px-4 py-2 text-sm text-neutral-300 hover:bg-[#181818] hover:text-white transition-colors flex items-center"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <FiFolder className="mr-2" />
+                         Projects
+                      </Link>
+                      <div className="border-t border-neutral-800 my-1"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        Log Out
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
