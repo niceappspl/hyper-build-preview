@@ -9,7 +9,7 @@ import DownloadOptionsModal from '../components/DownloadOptionsModal';
 import Tooltip from '../components/Tooltip';
 import PreviewScreen from '../components/PreviewScreen';
 import { FiUser, FiServer, FiZap, FiKey, FiSettings, FiCode, FiSmartphone, FiDownload, FiFolder, FiFile, 
-         FiChevronRight, FiSearch, FiCopy, FiRefreshCw, FiPlus, FiTrash2, FiSave, FiPlay, FiMaximize, FiLayout, FiX } from 'react-icons/fi';
+         FiChevronRight, FiSearch, FiCopy, FiRefreshCw, FiPlus, FiTrash2, FiSave, FiPlay, FiMaximize, FiLayout, FiX, FiTerminal } from 'react-icons/fi';
 import { SiSupabase, SiFirebase, SiReact, SiJavascript, SiTypescript, SiCss3 } from 'react-icons/si';
 import { FaDatabase } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,7 @@ import { extractProjectId } from '../utils/helpers';
 import toast, { Toaster } from 'react-hot-toast';
 import ProjectEditor from '../components/ProjectEditor';
 import ProjectFileExplorer from '../components/ProjectFileExplorer';
+import LogsModal from '../components/LogsModal';
 
 interface LocationState {
   prompt: string;
@@ -63,6 +64,13 @@ const DesignerPage: React.FC = () => {
   const [fullScreenEditorFile, setFullScreenEditorFile] = useState<string | null>(null);
   const [fullScreenEditorContent, setFullScreenEditorContent] = useState<string>('');
   const [fullScreenEditorIsLoading, setFullScreenEditorIsLoading] = useState<boolean>(false);
+  const previewScreenRef = useRef<{ refreshPreview: () => void }>(null);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [logs, setLogs] = useState<Array<{
+    type: 'error' | 'info' | 'warning';
+    message: string;
+    timestamp: Date;
+  }>>([]);
 
   // Load project data if we have a projectId
   useEffect(() => {
@@ -77,7 +85,7 @@ const DesignerPage: React.FC = () => {
             setCurrentPrompt(project.description);
           }
           
-          // Also check if the project has a snack
+          // Sprawdź, czy projekt ma Snack
           try {
             const snackData = await snackService.getSnackUrl(projectId);
             if (snackData) {
@@ -98,6 +106,28 @@ const DesignerPage: React.FC = () => {
     
     loadProject();
   }, [projectId, currentPrompt]);
+
+  // Dodaj przykładowe logi (w rzeczywistości będą pochodzić z Expo)
+  useEffect(() => {
+    // Symulacja logów (w rzeczywistości będą pochodzić z Expo)
+    setLogs([
+      {
+        type: 'info',
+        message: 'Starting Expo development server...',
+        timestamp: new Date()
+      },
+      {
+        type: 'info',
+        message: 'Expo DevTools is running at http://localhost:19002',
+        timestamp: new Date()
+      },
+      {
+        type: 'warning',
+        message: 'Some dependencies are not compatible with the current Expo SDK version',
+        timestamp: new Date()
+      }
+    ]);
+  }, []);
 
   const handleChatMessage = (message: string) => {
     console.log('Received message:', message);
@@ -543,7 +573,14 @@ AppRegistry.registerComponent(appName, () => App);`;
                   <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                   
                   {/* Phone Frame - zastąpiony komponentem PreviewScreen */}
-                  <PreviewScreen prompt={currentPrompt} mockType="default" selectedDevice={selectedDevice} />
+                  <PreviewScreen 
+                    ref={previewScreenRef}
+                    prompt={currentPrompt} 
+                    mockType="default" 
+                    selectedDevice={selectedDevice} 
+                    projectId={projectId} 
+                    snackUrl={snackUrl} 
+                  />
                 </motion.div>
               )}
               
@@ -559,7 +596,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                       <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                       
                       {/* Phone Frame - zastąpiony komponentem PreviewScreen */}
-                      <PreviewScreen prompt={currentPrompt} mockType="default" selectedDevice={selectedDevice} />
+                      <PreviewScreen prompt={currentPrompt} mockType="default" selectedDevice={selectedDevice} projectId={projectId} snackUrl={snackUrl} />
                     </motion.div>
                   </div>
                   <div className="w-1/2 h-full bg-[#0a0a0a] rounded-xl border border-neutral-800 overflow-hidden">
@@ -577,42 +614,68 @@ AppRegistry.registerComponent(appName, () => App);`;
               )}
               
               {/* Floating Action Buttons */}
-              <div className="absolute bottom-6 right-6 flex flex-col space-y-3">
-                <Tooltip content="Download Application" position="left">
-                  <motion.button 
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center justify-center p-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg text-white"
-                    onClick={() => setShowDownloadModal(true)}
-                  >
-                    <FiDownload className="w-5 h-5" />
-                  </motion.button>
-                </Tooltip>
-                
-                <Tooltip content="Open on Device" position="left">
-                  <motion.button 
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center justify-center p-3 rounded-full bg-[#1a1a1a] border border-neutral-700 shadow-lg text-white"
-                    onClick={handleQRModal}
-                  >
-                    <FiSmartphone className="w-5 h-5" />
-                  </motion.button>
-                </Tooltip>
-              </div>
-              
-              {/* Full screen preview button */}
-              <div className="absolute bottom-6 left-6">
-                <Tooltip content="Full Screen Preview" position="right">
-                  <motion.button 
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center justify-center p-3 rounded-full bg-[#1a1a1a] border border-neutral-700 shadow-lg text-white"
-                    onClick={() => setShowFullScreenPreview(true)}
-                  >
-                    <FiMaximize className="w-5 h-5" />
-                  </motion.button>
-                </Tooltip>
+              <div className="absolute bottom-6 right-6">
+                <div className="bg-black/40 backdrop-blur-sm rounded-xl p-2 border border-neutral-800/50 shadow-lg flex flex-col gap-2">
+                  <Tooltip content="Refresh Preview" position="left">
+                    <motion.button 
+                      whileHover={{ scale: 1.05, backgroundColor: '#1a1a1a' }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2.5 rounded-lg bg-black border border-neutral-700 hover:border-blue-500/50 text-neutral-200 transition-all duration-200"
+                      onClick={async () => {
+                        try {
+                          if (projectId) {
+                            const snackResponse = await snackService.updateSnack({ projectId });
+                            if (snackResponse) {
+                              setSnackUrl(snackResponse.snackUrl);
+                              if (previewScreenRef.current?.refreshPreview) {
+                                previewScreenRef.current.refreshPreview();
+                              }
+                              toast.success('Preview refreshed');
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error refreshing preview:', error);
+                          toast.error('Failed to refresh preview');
+                        }
+                      }}
+                    >
+                      <FiRefreshCw className="w-5 h-5" />
+                    </motion.button>
+                  </Tooltip>
+
+                  <Tooltip content="View Logs" position="left">
+                    <motion.button 
+                      whileHover={{ scale: 1.05, backgroundColor: '#1a1a1a' }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2.5 rounded-lg bg-black border border-neutral-700 hover:border-blue-500/50 text-neutral-200 transition-all duration-200"
+                      onClick={() => setShowLogsModal(true)}
+                    >
+                      <FiTerminal className="w-5 h-5" />
+                    </motion.button>
+                  </Tooltip>
+
+                  <Tooltip content="Open on Device" position="left">
+                    <motion.button 
+                      whileHover={{ scale: 1.05, backgroundColor: '#1a1a1a' }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2.5 rounded-lg bg-black border border-neutral-700 hover:border-blue-500/50 text-neutral-200 transition-all duration-200"
+                      onClick={handleQRModal}
+                    >
+                      <FiSmartphone className="w-5 h-5" />
+                    </motion.button>
+                  </Tooltip>
+
+                  <Tooltip content="Full Screen" position="left">
+                    <motion.button 
+                      whileHover={{ scale: 1.05, backgroundColor: '#1a1a1a' }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2.5 rounded-lg bg-black border border-neutral-700 hover:border-blue-500/50 text-neutral-200 transition-all duration-200"
+                      onClick={() => setShowFullScreenPreview(true)}
+                    >
+                      <FiMaximize className="w-5 h-5" />
+                    </motion.button>
+                  </Tooltip>
+                </div>
               </div>
             </div>
           </div>
@@ -684,11 +747,31 @@ AppRegistry.registerComponent(appName, () => App);`;
             
             <div className="flex-1 overflow-hidden">
               {activeTab === 'assistant' ? (
-                <ChatInterface 
-                  initialPrompt={initialPrompt}
-                  onSendMessage={handleChatMessage}
-                  projectId={projectId}
-                />
+                <div className="flex flex-col justify-center items-center h-full bg-gradient-to-b from-[#0c0c0c] to-black p-8 text-center">
+                  <div className="animate-pulse w-16 h-16 mb-6 text-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3">Asystent jest wyłączony</h3>
+                  <p className="text-neutral-400 mb-6 max-w-md">
+                    Funkcjonalność asystenta AI została wyłączona. Podgląd aplikacji Expo jest dostępny bezpośrednio po lewej stronie.
+                  </p>
+                  <p className="text-neutral-500 text-sm">
+                    Aplikacja jest generowana bezpośrednio z plików projektu i wyświetlana w ramce telefonu.
+                  </p>
+                  {projectId && !snackUrl && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm flex items-center"
+                      onClick={handleQRModal}
+                    >
+                      <FiSmartphone className="mr-2" />
+                      Otwórz na urządzeniu
+                    </motion.button>
+                  )}
+                </div>
               ) : activeTab === 'code' ? (
                 <ProjectEditor projectId={projectId} />
               ) : (
@@ -767,6 +850,7 @@ AppRegistry.registerComponent(appName, () => App);`;
         prompt={currentPrompt}
         snackUrl={snackUrl}
         qrCodeUrl={qrCodeUrl}
+        projectId={projectId}
       />
       
       <FullScreenPreview 
@@ -775,12 +859,20 @@ AppRegistry.registerComponent(appName, () => App);`;
         deviceType={selectedDevice}
         mockType={mockType}
         prompt={currentPrompt}
+        projectId={projectId}
+        snackUrl={snackUrl}
       />
       
       <DownloadOptionsModal 
         isVisible={showDownloadModal}
         onClose={() => setShowDownloadModal(false)}
         prompt={currentPrompt}
+      />
+
+      <LogsModal 
+        isVisible={showLogsModal}
+        onClose={() => setShowLogsModal(false)}
+        logs={logs}
       />
 
       {/* Pełnoekranowy edytor kodu */}

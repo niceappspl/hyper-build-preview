@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiFolder, FiEdit, FiTrash2, FiPlay, FiClock, FiPlus, FiAlertTriangle } from 'react-icons/fi';
 import { projectService } from '../../services';
 import toast from 'react-hot-toast';
+import ProjectCreator from './ProjectCreator';
 
 interface Project {
   id: string;
@@ -27,6 +28,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
   const [error, setError] = useState<string | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -105,6 +107,13 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
     });
   };
 
+  // Handle newly created project
+  const handleProjectCreated = (project: Project) => {
+    // Add the new project to the list and close the modal
+    setProjects([project, ...projects]);
+    setIsCreateModalOpen(false);
+  };
+
   return (
     <div className="w-full">
       <h2 className="text-xl font-semibold mb-4 text-white">
@@ -130,7 +139,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 rounded-lg text-white text-sm font-medium transition-colors shadow-lg"
-            onClick={() => navigate('/designer')}
+            onClick={() => setIsCreateModalOpen(true)}
           >
             <div className="flex items-center">
               <FiPlus className="mr-2" />
@@ -237,6 +246,13 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectSelected }) => {
           </motion.button>
         </div>
       )}
+
+      {/* Project Creator Component */}
+      <ProjectCreator 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)}
+        onProjectCreated={handleProjectCreated}
+      />
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>

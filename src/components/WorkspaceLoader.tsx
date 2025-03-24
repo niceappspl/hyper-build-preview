@@ -95,7 +95,7 @@ const WorkspaceLoader: React.FC<WorkspaceLoaderProps> = ({
       const totalLogs = allLogs.length;
       const logsToShow = Math.ceil((buildProgress / 100) * totalLogs);
       
-      // Add logs incrementally with a slight delay between each
+      // Add logs incrementally with a minimal delay between each
       const timer = setInterval(() => {
         setVisibleLogs(prev => {
           if (prev < logsToShow) {
@@ -105,7 +105,7 @@ const WorkspaceLoader: React.FC<WorkspaceLoaderProps> = ({
             return prev;
           }
         });
-      }, 150); // Adjust timing as needed
+      }, 50); // Znacznie szybsza częstotliwość aktualizacji (zmniejszone z 150ms)
       
       return () => clearInterval(timer);
     } else {

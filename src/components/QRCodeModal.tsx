@@ -12,6 +12,7 @@ interface QRCodeModalProps {
   prompt: string;
   snackUrl?: string;
   qrCodeUrl?: string;
+  projectId?: string;
 }
 
 const QRCodeModal: React.FC<QRCodeModalProps> = ({ 
@@ -21,7 +22,8 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
   mockType,
   prompt,
   snackUrl,
-  qrCodeUrl
+  qrCodeUrl,
+  projectId
 }) => {
   // Generate a preview URL or use the provided snackUrl
   const previewUrl = snackUrl || 'https://snack.expo.dev/your-project';
@@ -73,7 +75,9 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                   <PreviewScreen 
                     prompt={prompt} 
                     mockType="default" 
-                    selectedDevice={deviceType} 
+                    selectedDevice={deviceType}
+                    projectId={projectId}
+                    snackUrl={snackUrl}
                   />
                 </div>
               </div>

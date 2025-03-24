@@ -10,6 +10,8 @@ interface FullScreenPreviewProps {
   deviceType: 'iphone' | 'android';
   mockType: 'default' | 'spotify';
   prompt: string;
+  projectId?: string;
+  snackUrl?: string;
 }
 
 const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({ 
@@ -17,7 +19,9 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   onClose, 
   deviceType,
   mockType,
-  prompt 
+  prompt,
+  projectId,
+  snackUrl
 }) => {
   return (
     <AnimatePresence>
@@ -111,7 +115,9 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
               <PreviewScreen 
                 prompt={prompt} 
                 mockType="default" 
-                selectedDevice={deviceType} 
+                selectedDevice={deviceType}
+                projectId={projectId}
+                snackUrl={snackUrl}
               />
             </motion.div>
             
