@@ -7,7 +7,6 @@ import QRCodeModal from '../components/QRCodeModal';
 import FullScreenPreview from '../components/FullScreenPreview';
 import DownloadOptionsModal from '../components/DownloadOptionsModal';
 import Tooltip from '../components/Tooltip';
-import PreviewScreen from '../components/PreviewScreen';
 import { FiUser, FiServer, FiZap, FiKey, FiSettings, FiCode, FiSmartphone, FiDownload, FiFolder, FiFile, 
          FiChevronRight, FiSearch, FiCopy, FiRefreshCw, FiPlus, FiTrash2, FiSave, FiPlay, FiMaximize, FiLayout, FiX, FiTerminal } from 'react-icons/fi';
 import { SiSupabase, SiFirebase, SiReact, SiJavascript, SiTypescript, SiCss3 } from 'react-icons/si';
@@ -19,6 +18,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import ProjectEditor from '../components/ProjectEditor';
 import ProjectFileExplorer from '../components/ProjectFileExplorer';
 import LogsModal from '../components/LogsModal';
+import PreviewScreen from '../components/PreviewScreen';
 
 interface LocationState {
   prompt: string;
@@ -578,8 +578,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                     prompt={currentPrompt} 
                     mockType="default" 
                     selectedDevice={selectedDevice} 
-                    projectId={projectId} 
-                    snackUrl={snackUrl} 
+                    projectId={projectId}
                   />
                 </motion.div>
               )}
@@ -596,7 +595,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                       <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                       
                       {/* Phone Frame - zastąpiony komponentem PreviewScreen */}
-                      <PreviewScreen prompt={currentPrompt} mockType="default" selectedDevice={selectedDevice} projectId={projectId} snackUrl={snackUrl} />
+                      <PreviewScreen prompt={currentPrompt} mockType="default" selectedDevice={selectedDevice} projectId={projectId}/>
                     </motion.div>
                   </div>
                   <div className="w-1/2 h-full bg-[#0a0a0a] rounded-xl border border-neutral-800 overflow-hidden">

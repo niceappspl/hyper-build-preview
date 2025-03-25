@@ -302,10 +302,7 @@ const Header: React.FC<HeaderProps> = ({
                     whileTap={{ scale: 0.95 }}
                     className="hidden md:flex"
                   >
-                    <Link to="/auth" className="flex items-center px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors">
-                      <FiLogIn className="w-4 h-4 mr-1.5" />
-                      <span>Log in</span>
-                    </Link>
+                   
                   </motion.div>
                   <motion.div 
                     whileHover={{ scale: 1.05 }}
@@ -316,7 +313,7 @@ const Header: React.FC<HeaderProps> = ({
                       className="flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg text-sm text-white font-medium"
                     >
                       <FiUserPlus className="w-4 h-4 mr-1.5" />
-                      <span className="hidden md:inline">Sign up</span>
+                      <span className="hidden md:inline">Get Started</span>
                       <span className="md:hidden">Join</span>
                     </Link>
                   </motion.div>
