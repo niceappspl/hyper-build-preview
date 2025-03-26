@@ -1,50 +1,99 @@
-# React + TypeScript + Vite
+# iOS Simulator dla React Native
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Symulator iOS do testowania kodu React Native w przeglądarce, oparty na Expo Snack.
 
-Currently, two official plugins are available:
+## Funkcje
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Edycja kodu React Native w przeglądarce
+- Podgląd aplikacji w symulatorze iOS
+- Generowanie kodu QR do testowania na urządzeniach mobilnych
+- Łatwe udostępnianie kodu poprzez link do Expo Snack
 
-## Expanding the ESLint configuration
+## Uruchomienie
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+1. Sklonuj repozytorium
+2. Zainstaluj zależności:
+   ```bash
+   npm install
+   ```
+3. Uruchom backend (port 3000):
+   ```bash
+   cd ../hyper-build-backand
+   npm install
+   node app.js
+   ```
+4. Uruchom frontend (port 5173):
+   ```bash
+   cd ../hyper-build-designer
+   npm start
+   ```
 
-- Configure the top-level `parserOptions` property like this:
+## Rozwiązanie problemu CORS
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+Symulator używa Expo Snack do kompilacji kodu React Native. Ze względu na ograniczenia bezpieczeństwa przeglądarek (CORS), osadzenie bezpośrednio iframe z Expo Snack może nie działać.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### Opcja 1: Backend jako proxy (domyślnie)
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+Domyślna i najlepsza opcja to wykorzystanie backendeu Hyper Build jako proxy (port 3000). 
+**Backend musi być uruchomiony** przed rozpoczęciem korzystania z symulatora.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+1. Upewnij się, że backend jest uruchomiony:
+   ```bash
+   cd ../hyper-build-backand
+   node app.js
+   ```
+
+2. Backend automatycznie udostępnia proxy pod adresem:
+   ```
+   http://localhost:3000/api/expo-proxy
+   ```
+
+3. Symulator jest skonfigurowany tak, aby domyślnie korzystać z backendu jako proxy.
+
+### Opcja 2: Użycie przycisków awaryjnych
+
+Jeśli napotkasz komunikat o błędzie CORS, możesz:
+- Kliknąć "Otwórz podgląd w nowej karcie", aby zobaczyć wynik w pełnym edytorze Expo
+- Kliknąć "Otwórz w Expo Snack", aby edytować kod w pełnym edytorze Expo
+
+### Opcja 3: Uruchomienie oddzielnego serwera proxy
+
+Jeśli z jakiegoś powodu nie możesz używać backendu Hyper Build, możesz uruchomić oddzielny serwer proxy:
+
+1. Zainstaluj wymagane pakiety:
+   ```bash
+   npm install express http-proxy-middleware cors
+   ```
+
+2. Uruchom serwer proxy:
+   ```bash
+   node proxy-server.js
+   ```
+
+3. Serwer proxy będzie dostępny pod adresem:
+   ```
+   http://localhost:3001/expo-proxy
+   ```
+
+4. W symulatorze wybierz opcję "Lokalny serwer proxy (port 3001)" z rozwijanej listy.
+
+## Deployment
+
+### Na serwerze produkcyjnym
+
+1. Zintegruj funkcjonalność proxy z backendem Twojej aplikacji.
+2. Skonfiguruj odpowiednie nagłówki CORS na serwerze.
+3. Dostosuj URL w funkcji `generatePreviewUrl()` do Twojego środowiska produkcyjnego:
+   ```javascript
+   const generatePreviewUrl = () => {
+     return `https://twoj-backend.com/api/expo-proxy/embedded?preview=true&platform=ios&code=${encodeURIComponent(userCode)}`;
+   };
+   ```
+
+## Autorzy
+
+- Hyper Build Team
+
+## Licencja
+
+MIT

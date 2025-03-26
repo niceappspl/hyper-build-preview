@@ -105,7 +105,7 @@ const aiService = {
     }
     
     // Tworzymy URL dla EventSource z parametrami
-    const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000/api';
+    const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3050/api';
     const url = new URL(`${API_URL}/generate/stream`);
     
     // EventSource nie obsługuje metody POST, dlatego użyjemy fetch

@@ -12,4 +12,20 @@ export default defineConfig({
       },
     },
   },
+  resolve: {
+    alias: {
+      // Polyfills dla modułów Node.js
+      assert: 'assert',
+      buffer: 'buffer',
+      util: 'util',
+      process: 'process',
+    },
+  },
+  optimizeDeps: {
+    include: ['assert', 'buffer', 'util', 'process'],
+  },
+  define: {
+    'process.env': {},
+    'global': 'window',
+  },
 })

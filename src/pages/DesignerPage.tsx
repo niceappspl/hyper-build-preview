@@ -71,6 +71,8 @@ const DesignerPage: React.FC = () => {
     message: string;
     timestamp: Date;
   }>>([]);
+  // Stan do przechowywania plików projektu
+  const [projectFiles, setProjectFiles] = useState<{ [key: string]: string }>({});
 
   // Load project data if we have a projectId
   useEffect(() => {
@@ -84,6 +86,9 @@ const DesignerPage: React.FC = () => {
           if (!currentPrompt && project.description) {
             setCurrentPrompt(project.description);
           }
+          
+          // Pobierz pliki projektu
+          await loadProjectFiles(projectId);
           
           // Sprawdź, czy projekt ma Snack
           try {
@@ -106,6 +111,47 @@ const DesignerPage: React.FC = () => {
     
     loadProject();
   }, [projectId, currentPrompt]);
+
+  // Funkcja do ładowania plików projektu
+  const loadProjectFiles = async (projectId: string) => {
+    try {
+      // Pobierz listę plików w projekcie
+      const fileList = await projectService.getProjectFiles(projectId);
+      
+      // Inicjalizuj nowy obiekt na pliki
+      const files: { [key: string]: string } = {};
+      
+      // Pobierz zawartość każdego pliku
+      for (const filePath of fileList) {
+        try {
+          const content = await projectService.getFileContent(projectId, filePath);
+          files[filePath] = content;
+        } catch (err) {
+          console.error(`Error loading file ${filePath}:`, err);
+        }
+      }
+      
+      // Aktualizuj stan plików projektu
+      setProjectFiles(files);
+      console.log('Project files loaded:', Object.keys(files));
+      
+      return files;
+    } catch (err) {
+      console.error('Error loading project files:', err);
+      return {};
+    }
+  };
+
+  // Dodaj funkcję do odświeżania plików projektu (np. po edycji)
+  const refreshProjectFiles = async () => {
+    if (projectId) {
+      await loadProjectFiles(projectId);
+      // Odśwież podgląd po załadowaniu plików
+      if (previewScreenRef.current?.refreshPreview) {
+        previewScreenRef.current.refreshPreview();
+      }
+    }
+  };
 
   // Dodaj przykładowe logi (w rzeczywistości będą pochodzić z Expo)
   useEffect(() => {
@@ -488,6 +534,17 @@ AppRegistry.registerComponent(appName, () => App);`;
     setIsSaving(true);
     try {
       await projectService.updateFile(projectId, fullScreenEditorFile, content);
+      // Aktualizuj lokalny stan plików projektu
+      setProjectFiles(prev => ({
+        ...prev,
+        [fullScreenEditorFile]: content
+      }));
+      
+      // Odśwież podgląd po zapisaniu
+      if (previewScreenRef.current?.refreshPreview) {
+        previewScreenRef.current.refreshPreview();
+      }
+      
       toast.success('File saved successfully');
     } catch (error) {
       console.error('Failed to save file:', error);
@@ -569,7 +626,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                   transition={{ duration: 0.5 }}
                   className="transform transition-transform duration-300 relative"
                 >
-                  {/* Glow effect pod urządzeniem - usunięty */}
+                  {/* Glow effect pod urządzeniem */}
                   <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                   
                   {/* Phone Frame - zastąpiony komponentem PreviewScreen */}
@@ -579,6 +636,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                     mockType="default" 
                     selectedDevice={selectedDevice} 
                     projectId={projectId}
+                    projectFiles={projectFiles}
                   />
                 </motion.div>
               )}
@@ -591,7 +649,7 @@ AppRegistry.registerComponent(appName, () => App);`;
                 <div className="w-full h-full flex space-x-4">
                   <div className="w-1/2 h-full flex justify-center items-center">
                     <motion.div className="relative scale-75">
-                      {/* Glow effect pod urządzeniem - usunięty */}
+                      {/* Glow effect pod urządzeniem */}
                       <div className="absolute -inset-2 bg-gradient-to-b from-blue-500/10 to-cyan-500/10 rounded-[50px] blur-xl"></div>
                       
                       {/* Phone Frame - zastąpiony komponentem PreviewScreen */}
@@ -623,14 +681,20 @@ AppRegistry.registerComponent(appName, () => App);`;
                       onClick={async () => {
                         try {
                           if (projectId) {
+                            // Odśwież pliki projektu
+                            await loadProjectFiles(projectId);
+                            
+                            // Odśwież również URL do Snack
                             const snackResponse = await snackService.updateSnack({ projectId });
                             if (snackResponse) {
                               setSnackUrl(snackResponse.snackUrl);
-                              if (previewScreenRef.current?.refreshPreview) {
-                                previewScreenRef.current.refreshPreview();
-                              }
-                              toast.success('Preview refreshed');
                             }
+                            
+                            // Odśwież podgląd
+                            if (previewScreenRef.current?.refreshPreview) {
+                              previewScreenRef.current.refreshPreview();
+                            }
+                            toast.success('Preview refreshed');
                           }
                         } catch (error) {
                           console.error('Error refreshing preview:', error);
@@ -639,6 +703,17 @@ AppRegistry.registerComponent(appName, () => App);`;
                       }}
                     >
                       <FiRefreshCw className="w-5 h-5" />
+                    </motion.button>
+                  </Tooltip>
+
+                  <Tooltip content="Download App" position="left">
+                    <motion.button 
+                      whileHover={{ scale: 1.05, backgroundColor: '#1a1a1a' }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2.5 rounded-lg bg-black border border-neutral-700 hover:border-blue-500/50 text-neutral-200 transition-all duration-200"
+                      onClick={() => setShowDownloadModal(true)}
+                    >
+                      <FiDownload className="w-5 h-5" />
                     </motion.button>
                   </Tooltip>
 

@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Get the API URL from environment variables or use default
-const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3050/api';
 
 // Maximum number of retries for failed requests
 const MAX_RETRIES = 2;

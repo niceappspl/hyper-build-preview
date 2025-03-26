@@ -5,7 +5,6 @@ import DesignerPage from './pages/DesignerPage';
 import AuthPage from './pages/AuthPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProfilePage from './pages/ProfilePage';
-import IOSSimulatorPage from './pages/IOSSimulatorPage';
 // Add these styles to your CSS file or create a new one
 import './App.css';
 
@@ -19,7 +18,6 @@ const App: React.FC = () => {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/simulator" element={<IOSSimulatorPage />} />
       </Routes>
     </Router>
   );

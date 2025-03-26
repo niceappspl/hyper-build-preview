@@ -81,7 +81,7 @@ const AuthPage: React.FC = () => {
           
           // Navigate to designer page after successful auth with the new project
           setTimeout(() => {
-            navigate('/designer', { 
+            navigate('/projects', { 
               state: { 
                 prompt: "Your new app project", 
                 isPublic: false,
@@ -93,7 +93,7 @@ const AuthPage: React.FC = () => {
           console.error('Error creating project:', projectError);
           // Still navigate to designer even if project creation fails
           setTimeout(() => {
-            navigate('/designer', { 
+            navigate('/projects', { 
               state: { 
                 prompt: "Your new app project", 
                 isPublic: false

@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { CreateSnackOptions, SnackResponse, UpdateSnackOptions } from '../types/expo-snack';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3050';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
