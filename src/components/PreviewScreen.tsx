@@ -168,76 +168,368 @@ const ExpoPreview = ({
   
   // Domyślny kod React Native, używany gdy projectFiles nie jest dostarczone
   const defaultCode = `
-import React from 'react';
-import { Text, View, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../App';
+import React, { useState } from 'react';
+import { 
+  Text, 
+  View, 
+  TextInput, 
+  TouchableOpacity, 
+  ImageBackground, 
+  StatusBar, 
+  KeyboardAvoidingView, 
+  Platform,
+  Dimensions,
+  ScrollView,
+  SafeAreaView
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+// Dostosowanie do wymiarów iframe Expo - iPhone 14 Pro
+// Wymiary są dostosowane do ramki, którą widzimy w podglądzie
+const { width, height } = Dimensions.get('window');
+const DESIGN_WIDTH = 393;  // Szerokość iPhone'a w ramce
+const DESIGN_HEIGHT = 852; // Wysokość iPhone'a w ramce
+const DYNAMIC_ISLAND_HEIGHT = 0; // Wysokość Dynamic Island
 
-interface HomeScreenProps {
-  navigation: HomeScreenNavigationProp;
-}
+// Funkcja skalująca wymiary w zależności od rzeczywistego rozmiaru ekranu
+const scale = (size) => {
+  return (width / DESIGN_WIDTH) * size;
+};
 
-interface ItemData {
-  id: string;
-  title: string;
-  description: string;
-}
+// Funkcja skalująca marginesy i paddingi
+const spacing = (size) => {
+  return Math.max(8, scale(size));
+};
 
-const DATA: ItemData[] = [
-  { id: '1', title: 'First Item', description: 'Description for the first item' },
-  { id: '2', title: 'Second Item', description: 'Description for the second item' },
-  { id: '3', title: 'Third Item', description: 'Description for the third item' },
-];
-
-export default function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
-  const renderItem = ({ item }: { item: ItemData }): React.JSX.Element => (
-    <TouchableOpacity 
-      onPress={() => navigation.navigate('Details', { 
-        itemId: item.id, 
-        title: item.title,
-        description: item.description 
-      })}
-      style={{
-        backgroundColor: '#ffffff',
-        padding: 20,
-        marginVertical: 8,
-        marginHorizontal: 16,
-        borderRadius: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.22,
-        shadowRadius: 2.22,
-        elevation: 3,
-      }}
-    >
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>{item.title}</Text>
-      <Text style={{ fontSize: 14, color: '#666' }}>{item.description}</Text>
-    </TouchableOpacity>
-  );
+export default function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  
+  // Animated gradient colors for the button
+  const primaryGradient = ['#4F46E5', '#7C3AED'];
   
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
-      <View style={{ padding: 16 }}>
-        <Text style={{ 
-          fontSize: 28, 
-          fontWeight: 'bold', 
-          marginBottom: 16,
-          textAlign: 'center',
-          color: '#333'
-        }}>
-          Welcome to Your App
-        </Text>
-        
-        <FlatList
-          data={DATA}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
-      </View>
-    </SafeAreaView>
+    <ImageBackground
+      source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=1000&auto=format&fit=crop' }}
+      style={{ 
+        flex: 1,
+        width: '100%',
+        height: '100%'
+      }}
+      resizeMode="cover"
+    >
+      <StatusBar barStyle="light-content" />
+      
+      <SafeAreaView style={{ 
+        flex: 1, 
+        paddingTop: DYNAMIC_ISLAND_HEIGHT // Uwzględnienie Dynamic Island
+      }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={scale(10)}
+        >
+          <LinearGradient
+            colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.85)']}
+            style={{ 
+              flex: 1, 
+              justifyContent: 'space-between', 
+              padding: spacing(20)
+            }}
+          >
+            {/* Logo and App Name */}
+            <View style={{ 
+              alignItems: 'center', 
+              marginTop: spacing(40)
+            }}>
+              <View style={{
+                width: scale(60),
+                height: scale(60),
+                borderRadius: scale(16),
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: spacing(12),
+                overflow: 'hidden'
+              }}>
+                <LinearGradient
+                  colors={primaryGradient}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: '100%',
+                    opacity: 0.8
+                  }}
+                />
+                <Text style={{ 
+                  color: 'white', 
+                  fontSize: scale(28), 
+                  fontWeight: 'bold' 
+                }}>F</Text>
+              </View>
+              
+              <Text style={{ 
+                color: 'white', 
+                fontSize: scale(24), 
+                fontWeight: 'bold',
+                letterSpacing: 1
+              }}>
+                FitPulse
+              </Text>
+              <Text style={{ 
+                color: 'rgba(255,255,255,0.7)', 
+                fontSize: scale(14),
+                marginTop: spacing(4)
+              }}>
+                Train smarter, not harder
+              </Text>
+            </View>
+            
+            {/* Login Form */}
+            <View style={{ width: '100%' }}>
+              <Text style={{ 
+                color: 'white', 
+                fontSize: scale(20), 
+                fontWeight: 'bold',
+                marginBottom: spacing(20)
+              }}>
+                Welcome Back
+              </Text>
+              
+              {/* Email Input */}
+              <BlurView
+                intensity={30}
+                tint="dark"
+                style={{
+                  borderRadius: scale(12),
+                  overflow: 'hidden',
+                  marginBottom: spacing(16)
+                }}
+              >
+                <View style={{
+                  paddingHorizontal: spacing(16),
+                  paddingVertical: spacing(6),
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                }}>
+                  <Text style={{ 
+                    color: 'rgba(255,255,255,0.6)', 
+                    fontSize: scale(12),
+                    marginTop: spacing(4)
+                  }}>
+                    Email
+                  </Text>
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="your@email.com"
+                    placeholderTextColor="rgba(255,255,255,0.4)"
+                    style={{
+                      color: 'white',
+                      fontSize: scale(16),
+                      paddingVertical: spacing(6),
+                      paddingHorizontal: 0
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </BlurView>
+              
+              {/* Password Input */}
+              <BlurView
+                intensity={30}
+                tint="dark"
+                style={{
+                  borderRadius: scale(12),
+                  overflow: 'hidden',
+                  marginBottom: spacing(8)
+                }}
+              >
+                <View style={{
+                  paddingHorizontal: spacing(16),
+                  paddingVertical: spacing(6),
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  flexDirection: 'row',
+                  alignItems: 'center'
+                }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ 
+                      color: 'rgba(255,255,255,0.6)', 
+                      fontSize: scale(12),
+                      marginTop: spacing(4)
+                    }}>
+                      Password
+                    </Text>
+                    <TextInput
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="••••••••"
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                      secureTextEntry={!isPasswordVisible}
+                      style={{
+                        color: 'white',
+                        fontSize: scale(16),
+                        paddingVertical: spacing(6),
+                        paddingHorizontal: 0
+                      }}
+                    />
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                    style={{
+                      padding: spacing(8)
+                    }}
+                  >
+                    <Text style={{ 
+                      color: 'rgba(255,255,255,0.6)', 
+                      fontSize: scale(14)
+                    }}>
+                      {isPasswordVisible ? 'Hide' : 'Show'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </BlurView>
+              
+              {/* Forgot Password */}
+              <TouchableOpacity style={{ 
+                alignSelf: 'flex-end', 
+                marginBottom: spacing(20) 
+              }}>
+                <Text style={{ 
+                  color: 'rgba(255,255,255,0.7)', 
+                  fontSize: scale(14)
+                }}>
+                  Forgot Password?
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Login Button */}
+              <TouchableOpacity
+                style={{
+                  borderRadius: scale(12),
+                  overflow: 'hidden',
+                  marginBottom: spacing(16),
+                  elevation: 4,
+                  shadowColor: '#4F46E5',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8
+                }}
+              >
+                <LinearGradient
+                  colors={primaryGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    paddingVertical: spacing(14),
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Text style={{ 
+                    color: 'white', 
+                    fontSize: scale(16), 
+                    fontWeight: 'bold',
+                    letterSpacing: 0.5
+                  }}>
+                    LOG IN
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              
+              {/* Social Login Options */}
+              <View style={{ marginBottom: spacing(16) }}>
+                <Text style={{ 
+                  color: 'rgba(255,255,255,0.6)', 
+                  fontSize: scale(14),
+                  textAlign: 'center',
+                  marginBottom: spacing(12)
+                }}>
+                  Or continue with
+                </Text>
+                
+                <View style={{ 
+                  flexDirection: 'row', 
+                  justifyContent: 'space-between'
+                }}>
+                  {/* Google Button */}
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      marginRight: spacing(8),
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      borderRadius: scale(12),
+                      paddingVertical: spacing(10),
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.2)'
+                    }}
+                  >
+                    <Text style={{ 
+                      color: 'white', 
+                      fontSize: scale(14),
+                      fontWeight: '500'
+                    }}>
+                      Google
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  {/* Apple Button */}
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      marginLeft: spacing(8),
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      borderRadius: scale(12),
+                      paddingVertical: spacing(10),
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.2)'
+                    }}
+                  >
+                    <Text style={{ 
+                      color: 'white', 
+                      fontSize: scale(14),
+                      fontWeight: '500'
+                    }}>
+                      Apple
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              {/* Sign Up Link */}
+              <View style={{ 
+                flexDirection: 'row', 
+                justifyContent: 'center',
+                marginBottom: spacing(12)
+              }}>
+                <Text style={{ 
+                  color: 'rgba(255,255,255,0.7)', 
+                  fontSize: scale(14),
+                  marginRight: spacing(4)
+                }}>
+                  Don't have an account?
+                </Text>
+                <TouchableOpacity>
+                  <Text style={{ 
+                    color: primaryGradient[0], 
+                    fontSize: scale(14),
+                    fontWeight: 'bold'
+                  }}>
+                    Sign Up
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </LinearGradient>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }`;
 
@@ -304,9 +596,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps): React.JSX.E
         sdkVersion: '48.0.0' as unknown as SDKVersion,
         files,
         dependencies: {
-          'expo': '~48.0.0',
-          'react': '18.2.0',
-          'react-native': '0.71.8'
+          'expo-linear-gradient': {
+            version: '~12.3.0'
+          },
+          'expo-blur': {
+            version: '~12.4.1'
+          }
         },
         webPreviewRef,
       } as any);
@@ -450,7 +745,7 @@ const PreviewScreen = forwardRef<PreviewScreenRef, PreviewScreenProps>(({
   
   // Precyzyjne wymiary dla iPhone'a - dostosowane do rzeczywistej ramki z SVG
   const iphoneWidth = 393;
-  const iphoneHeight = 852;
+  const iphoneHeight = 892;
   const scale = 0.7;
   const deviceWidth = iphoneWidth * scale;
   const deviceHeight = iphoneHeight * scale;
