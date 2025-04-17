@@ -69,9 +69,8 @@ const Header: React.FC<HeaderProps> = ({
   };
   
   return (
-    <header className="bg-gradient-to-r from-[#080808] to-[#0a0a0a] border-b border-[#222] py-1.5 px-4 relative z-20">
-      {/* Subtle glow line under header */}
-      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-blue-500/0 via-blue-500/20 to-blue-500/0"></div>
+    <header className="bg-transparent py-1.5 px-4 relative z-20">
+      {/* Remove the subtle glow line */}
       
       <div className="flex justify-between items-center">
         <div className="flex items-center">
@@ -82,18 +81,11 @@ const Header: React.FC<HeaderProps> = ({
               className="flex items-center group"
               whileHover={{ scale: 1.03 }}
             >
-              <div className="relative w-5 h-5 mr-1.5">
-                {/* Logo glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-sm blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative w-4 h-4 bg-gradient-to-b from-blue-400 to-blue-600 flex flex-col">
-                  <div className="h-1/5 bg-blue-300"></div>
-                  <div className="h-1/5 bg-blue-400"></div>
-                  <div className="h-1/5 bg-blue-500"></div>
-                  <div className="h-1/5 bg-blue-600"></div>
-                  <div className="h-1/5 bg-blue-700"></div>
-                </div>
-              </div>
-              <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">HyperBuild</span>
+              <img 
+                src="/hyper-build/logo-hyper-build-all.svg" 
+                alt="HyperBuild Logo" 
+                className="h-8 object-contain"
+              />
             </motion.a>
           )}
           
@@ -112,30 +104,7 @@ const Header: React.FC<HeaderProps> = ({
           {/* Navigation for Home page variant */}
           {variant === 'home' && (
             <nav className="hidden md:flex items-center ml-6 space-x-5">
-              <motion.a 
-                href="#" 
-                className="text-xs text-gray-400 hover:text-white transition-colors relative group"
-                whileHover={{ y: -1 }}
-              >
-                <span>Features</span>
-                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
-              </motion.a>
-              <motion.a 
-                href="#" 
-                className="text-xs text-gray-400 hover:text-white transition-colors relative group"
-                whileHover={{ y: -1 }}
-              >
-                <span>Pricing</span>
-                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
-              </motion.a>
-              <motion.a 
-                href="#" 
-                className="text-xs text-gray-400 hover:text-white transition-colors relative group"
-                whileHover={{ y: -1 }}
-              >
-                <span>Docs</span>
-                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:w-full transition-all duration-300"></div>
-              </motion.a>
+           
             </nav>
           )}
           
