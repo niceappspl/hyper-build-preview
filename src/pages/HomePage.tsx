@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const HomePage: React.FC = () => {
   const [prompt, setPrompt] = useState('');
-  const [isPublic, setIsPublic] = useState(false);
+  const [aiAssistant, setAiAssistant] = useState(true);
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildProgress, setBuildProgress] = useState(0);
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ const HomePage: React.FC = () => {
         
         // Navigate to designer page after a short delay
         setTimeout(() => {
-          navigate('/designer', { state: { prompt, isPublic } });
+          navigate('/designer', { state: { prompt, aiAssistant } });
         }, 500);
       }
       setBuildProgress(progress);
@@ -158,13 +158,13 @@ const HomePage: React.FC = () => {
                   
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400">Public</span>
+                      <span className="text-gray-400">AI Assistant</span>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input 
                           type="checkbox" 
                           className="sr-only peer" 
-                          checked={isPublic}
-                          onChange={() => setIsPublic(!isPublic)}
+                          checked={aiAssistant}
+                          onChange={() => setAiAssistant(!aiAssistant)}
                         />
                         <div className="w-11 h-6 bg-[#1a1a1a] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-cyan-500"></div>
                       </label>
