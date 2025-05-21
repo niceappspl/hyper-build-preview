@@ -90,6 +90,32 @@ Jeśli z jakiegoś powodu nie możesz używać backendu Hyper Build, możesz uru
    };
    ```
 
+### Deployment na Vercel
+
+Aplikacja jest skonfigurowana do wdrożenia na platformie Vercel z obsługą ścieżki `/expo-preview`.
+
+1. Upewnij się, że masz konto na [Vercel](https://vercel.com) i zainstalowany Vercel CLI:
+   ```bash
+   npm install -g vercel
+   ```
+
+2. Zaloguj się do Vercel CLI:
+   ```bash
+   vercel login
+   ```
+
+3. Wdróż aplikację wykonując w katalogu projektu:
+   ```bash
+   vercel
+   ```
+
+4. Dla produkcyjnego wdrożenia:
+   ```bash
+   vercel --prod
+   ```
+
+5. Po wdrożeniu, ścieżka `/expo-preview` będzie dostępna pod Twoim domeną Vercel, np. `https://your-project.vercel.app/expo-preview`
+
 ## Autorzy
 
 - Hyper Build Team

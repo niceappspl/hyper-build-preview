@@ -12,7 +12,8 @@
     "start": "NODE_ENV=production node dist/server/index.js",
     "lint": "eslint .",
     "server:dev": "NODE_ENV=development ts-node-esm server/index.ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "assert": "^2.1.0",

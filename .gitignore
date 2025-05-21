@@ -53,3 +53,4 @@ lerna-debug.log*
 
 # Optional: Local Netlify folder
 .netlify 
+.vercel

@@ -28,37 +28,546 @@ const ExpoPreviewPage: React.FC = () => {
   
   // Default code for React Native
   const defaultCode = `
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  Animated, 
+  KeyboardAvoidingView, 
+  Platform,
+  Image,
+  Dimensions,
+  StatusBar,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ImageBackground
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+
+const { width, height } = Dimensions.get('window');
 
 export default function App() {
+  // Form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [selectedCarIndex, setSelectedCarIndex] = useState(0);
+  
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const formOpacity = useRef(new Animated.Value(0)).current;
+  const formTranslateY = useRef(new Animated.Value(50)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  
+  // Available cars (simplified for demo)
+  const cars = [
+    {
+      id: 1,
+      name: 'Tesla Model S',
+      image: 'https://images.unsplash.com/photo-1617704548623-340376564e68?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dGVzbGElMjBtb2RlbCUyMHN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Tesla_T_symbol.svg/800px-Tesla_T_symbol.svg.png'
+    },
+    {
+      id: 2,
+      name: 'BMW i8',
+      image: 'https://images.unsplash.com/photo-1556800572-1b8aeef2c54f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Ym13JTIwaTh8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/1024px-BMW.svg.png'
+    },
+    {
+      id: 3,
+      name: 'Porsche Taycan',
+      image: 'https://images.unsplash.com/photo-1614200179396-2bdb77383056?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8cG9yc2NoZSUyMHRheWNhbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Porsche_logo.svg/2560px-Porsche_logo.svg.png'
+    }
+  ];
+  
+  useEffect(() => {
+    // Start animations when component mounts
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    ]).start();
+    
+    // Form animations with slight delay
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(formOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(formTranslateY, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }, 500);
+  }, []);
+  
+  const handleLoginPress = () => {
+    Animated.sequence([
+      Animated.timing(buttonScale, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      })
+    ]).start();
+    
+    Keyboard.dismiss();
+    
+    // Show simple validation
+    if (!email) alert('Please enter your email');
+    else if (!password) alert('Please enter your password');
+    else alert(\`Login successful! Welcome to your \${cars[selectedCarIndex].name}\`);
+  };
+  
+  const handleCarSelect = (index) => {
+    setSelectedCarIndex(index);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>HyperBuild Preview</Text>
-      <Text style={styles.subtitle}>Pass your code via URL or API to see it here</Text>
-    </View>
+    <ImageBackground
+      source={{ uri: cars[selectedCarIndex].image }}
+      style={styles.backgroundImage}
+    >
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      
+      {/* Gradient overlay */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}
+        style={styles.overlay}
+      />
+      
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
+          {/* Brand logo */}
+          <Animated.View 
+            style={[
+              styles.logoContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }]
+              }
+            ]}
+          >
+            <Image
+              source={{ uri: cars[selectedCarIndex].logo }}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
+          </Animated.View>
+          
+          {/* Car selection */}
+          <View style={styles.carSelectorContainer}>
+            {cars.map((car, index) => (
+              <TouchableOpacity
+                key={car.id}
+                style={[
+                  styles.carSelector,
+                  selectedCarIndex === index && styles.carSelectorActive
+                ]}
+                onPress={() => handleCarSelect(index)}
+              >
+                <Text 
+                  style={[
+                    styles.carSelectorText,
+                    selectedCarIndex === index && styles.carSelectorTextActive
+                  ]}
+                >
+                  {car.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Login form */}
+          <Animated.View 
+            style={[
+              styles.formContainer,
+              {
+                opacity: formOpacity,
+                transform: [{ translateY: formTranslateY }]
+              }
+            ]}
+          >
+            <BlurView intensity={80} tint="dark" style={styles.formBlur}>
+              <View style={styles.formContent}>
+                <Text style={styles.welcomeText}>Welcome Back</Text>
+                <Text style={styles.formSubtitle}>Sign in to continue</Text>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="your.email@example.com"
+                      placeholderTextColor="rgba(255,255,255,0.5)"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      value={email}
+                      onChangeText={setEmail}
+                    />
+                  </View>
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Password</Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={[styles.input, { paddingRight: 50 }]}
+                      placeholder="Enter your password"
+                      placeholderTextColor="rgba(255,255,255,0.5)"
+                      secureTextEntry={!isPasswordVisible}
+                      value={password}
+                      onChangeText={setPassword}
+                    />
+                    <TouchableOpacity 
+                      style={styles.visibilityToggle}
+                      onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                    >
+                      <Text style={styles.visibilityToggleText}>
+                        {isPasswordVisible ? 'Hide' : 'Show'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                
+                <View style={styles.optionsRow}>
+                  <TouchableOpacity 
+                    style={styles.checkboxContainer} 
+                    onPress={() => setRememberMe(!rememberMe)}
+                  >
+                    <View style={[
+                      styles.checkbox, 
+                      rememberMe && styles.checkboxChecked
+                    ]}>
+                      {rememberMe && <View style={styles.checkboxInner} />}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Remember me</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.forgotPassword}>
+                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                  <TouchableOpacity
+                    style={styles.loginButton}
+                    onPress={handleLoginPress}
+                    activeOpacity={0.9}
+                  >
+                    <LinearGradient
+                      colors={
+                        selectedCarIndex === 0 ? ['#e82127', '#bd081c'] : 
+                        selectedCarIndex === 1 ? ['#1c69d3', '#0653b6'] : 
+                        ['#ed2914', '#d61812']
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.loginButtonGradient}
+                    >
+                      <Text style={styles.loginButtonText}>START ENGINE</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Animated.View>
+                
+                {/* Biometric auth option */}
+                <View style={styles.biometricContainer}>
+                  <View style={styles.biometricDivider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>or</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
+                  
+                  <TouchableOpacity style={styles.biometricButton}>
+                    <View style={styles.biometricCircle}>
+                      <Image 
+                        source={{ uri: 'https://cdn-icons-png.flaticon.com/512/1251/1251161.png' }} 
+                        style={styles.biometricIcon} 
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <Text style={styles.biometricText}>Use Fingerprint</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </BlurView>
+          </Animated.View>
+          
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity>
+              <Text style={styles.signupText}>Register</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121212',
     padding: 20,
   },
-  text: {
-    fontSize: 24,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  brandLogo: {
+    width: 100,
+    height: 100,
+    marginBottom: 10,
+  },
+  carSelectorContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: 30,
+  },
+  carSelector: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 4,
+    marginBottom: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  carSelectorActive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  carSelectorText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  carSelectorTextActive: {
     color: 'white',
     fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
   },
-  subtitle: {
+  formContainer: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  formBlur: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  formContent: {
+    padding: 24,
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 6,
+  },
+  formSubtitle: {
     fontSize: 16,
-    color: '#cccccc',
-    textAlign: 'center',
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 24,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  inputWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
+  input: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: 'white',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  visibilityToggle: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+  },
+  visibilityToggleText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  checkboxInner: {
+    width: 10,
+    height: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 2,
+  },
+  checkboxLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+  },
+  forgotPassword: {
+    alignSelf: 'center',
+  },
+  forgotPasswordText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  loginButton: {
+    width: '100%',
+    height: 56,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    marginBottom: 24,
+  },
+  loginButtonGradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  biometricContainer: {
+    alignItems: 'center',
+  },
+  biometricDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  dividerText: {
+    color: 'rgba(255,255,255,0.6)',
+    paddingHorizontal: 10,
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  biometricButton: {
+    alignItems: 'center',
+  },
+  biometricCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  biometricIcon: {
+    width: 24,
+    height: 24,
+    tintColor: 'white',
+  },
+  biometricText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  footerText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+  },
+  signupText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });`;
 
@@ -189,7 +698,11 @@ const styles = StyleSheet.create({
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       // Only accept messages from trusted domains
-      const trustedOrigins = [window.location.origin, 'http://localhost:3000'];
+      const trustedOrigins = [
+        window.location.origin, 
+        'http://localhost:5173',
+        'https://hyperbuild.vercel.app'
+      ];
       if (!trustedOrigins.includes(event.origin)) return;
       
       const { type, code, dependencies: deps } = event.data || {};
@@ -290,7 +803,7 @@ const styles = StyleSheet.create({
           className="w-full h-full border-none"
           onLoad={handleIframeLoad}
           title="Expo Preview"
-          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; microphone; midi; payment; usb; xr-spatial-tracking"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; microphone; midi; payment; usb; xr-spatial-tracking; screen-wake-lock"
         />
       )}
     </div>
