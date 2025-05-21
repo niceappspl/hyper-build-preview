@@ -2,6 +2,29 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self' https://snack.expo.dev https://*.expo.dev https://*.expo.io https://*.amazonaws.com 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.expo.dev https://*.expo.io wss://*.expo.dev wss://*.expo.io https://*.amazonaws.com https://snack.expo.dev; frame-src 'self' https://snack.expo.dev https://*.expo.dev https://*.expo.io https://*.amazonaws.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://snack.expo.dev https://*.expo.dev https://*.expo.io https://*.amazonaws.com;"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Accept"
+        }
+      ]
+    }
+  ],
   "buildCommand": "npm run build",
   "outputDirectory": "dist"
 } 

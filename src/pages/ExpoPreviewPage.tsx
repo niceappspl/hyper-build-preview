@@ -701,9 +701,19 @@ const styles = StyleSheet.create({
       const trustedOrigins = [
         window.location.origin, 
         'http://localhost:5173',
-        'https://hyperbuild.vercel.app'
+        'https://hyperbuild.vercel.app',
+        'https://snack.expo.dev',
+        'https://snackager.expo.io',
+        'https://expo.dev'
       ];
-      if (!trustedOrigins.includes(event.origin)) return;
+      
+      // Check if the origin is from an expo subdomain
+      const isExpoSubdomain = 
+        event.origin.endsWith('.expo.dev') || 
+        event.origin.endsWith('.expo.io') ||
+        event.origin.includes('amazonaws.com');
+      
+      if (!trustedOrigins.includes(event.origin) && !isExpoSubdomain) return;
       
       const { type, code, dependencies: deps } = event.data || {};
       
